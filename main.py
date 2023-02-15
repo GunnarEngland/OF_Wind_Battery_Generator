@@ -21,7 +21,8 @@ bat_mode = True
 gen_mode = True
 #con_full = list_consumption()
 if wind_mode:
-    wind = pd.read_excel('FinalWind.xlsx')
+    temp_wind = pd.read_csv('FullWind.csv')
+    wind = monte_carlo_simulation(temp_wind)
 #read_consumption = pd.read_excel('Consumption.xlsx', usecols='B')
 #consumption = read_consumption['Consumption'].values.tolist()
 read_consumption = pd.read_csv('con_full.csv')
@@ -62,7 +63,7 @@ read_consumption = read_consumption.set_index([idx])
 if wind_mode:
     name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x
     turbine, turbines = turbineinfo(name)
-    n_turbine = 2
+    n_turbine = 3
     #print(turbines.columns)
     #x_test = [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0,
     #          20.0, 21.0, 22.0, 23.0, 24.0, 25.0]
@@ -104,8 +105,7 @@ if wind_mode:
     f = interpolate.interp1d(x_value, y_value, kind='cubic')
 
 # Wind module
-
-    power_output = wind_module(c_wind, x_value, f)
+    power_output = wind_module(c_wind[f'{c_name}'], x_value, f)
 
 # Shows plot for power curve and interpolation
 gen = 4000
@@ -124,9 +124,6 @@ if wind_mode is True and bat_mode is True and gen_mode is False:
 if wind_mode is False and bat_mode is False and gen_mode is True:
     max_output, needed, diesel_kwh, on, emission = gen_solo(consumption, X, gen)
 
-print(np.min(max_output))
-print(np.min(needed))
-print(np.min(diesel_kwh))
 #diesel_eff, x_eff, y_eff, efficiency = co2_emission(consumption, diesel_kwh, gen, X)
 #plt.plot(x_eff, y_eff, 'o')
 #plt.plot(x_eff, diesel_eff(x_eff))
@@ -149,7 +146,7 @@ for x in X:
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
 was_sum = np.sum(wasted)
 was_max = np.max(wasted)
-print('The amount wasted is %f kWh, and max in an hour is %f kWh' % (was_sum, was_max))
+print(f'The amount wasted is {was_sum:,.3f} kWh, and max in an hour is {was_max:,.3f} kWh')
 
 # Battery charging is max capacity/charging (Ah/A)
 con_sum = np.sum(consumption)
@@ -167,6 +164,7 @@ if gen_mode:
     print(f'This means that the generator emits {emi_sum:.3f} tons of CO2')
 
 # Shows an average through the plot. Window is chosen as how many hours are made into one
+sys.exit()
 timestep = 1000
 ave_con = average_plot(X, consumption, timestep)
 if bat_mode:

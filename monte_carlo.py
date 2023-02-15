@@ -4,9 +4,12 @@ import numpy as np
 import sys
 
 
-def monte_carlo_simulation():
-    df = pd.read_csv('TestResult.csv')
-    df.index = pd.to_datetime(df.index)
+def monte_carlo_simulation(df):
+    #df.rename(columns={'0': 'Date'})
+    df = df.set_index(pd.DatetimeIndex(df['Unnamed: 0']))
+    df = df.drop(['Unnamed: 0'], axis=1)
+    #df.to_csv('FullWind.csv')
+    print(df.head())
     n_years = [1997, 1998, 1999, 2001, 2002, 2003, 2005, 2006, 2007, 2009, 2010, 2011,
                2013, 2014, 2015, 2017, 2018, 2019]
     l_years = [1996, 2000, 2004, 2008, 2012, 2016]
@@ -18,8 +21,9 @@ def monte_carlo_simulation():
         else:
             n_year = np.random.choice(n_years, replace=False)
             df_filtered = df[df.index.year == n_year]
-        df_random.append(df_filtered, ignore_index=True)
+        df_random = pd.concat([df_random, df_filtered], ignore_index=True)
     print(df_random.head())
+    print(len(df_random))
     return df_random
     #df_filtered = df[(df.index.year >= 1996) & (df.index.year <= 2019)]
     #print(df_filtered.head())
