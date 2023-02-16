@@ -36,7 +36,7 @@ read_consumption = read_consumption.set_index([idx])
 if wind_mode:
     name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x
     turbine, turbines = turbineinfo(name)
-    n_turbine = 3
+    n_turbine = 2
 
 # String splitting
     x_value = string_to_float(turbine.power_curve_wind_speeds)
@@ -55,10 +55,6 @@ if wind_mode:
     if not b_same:
         wind[c_name] = np.array(c_wind)  # Adds new wind speed into dataframe with column-name c_name
 
-    print(wind.head())
-    print(np.average(wind))
-    print(c_wind.head(-5))
-    sys.exit()
 # Interpolating the power curve
     f = interpolate.interp1d(x_value, y_value, kind='cubic')
 
@@ -111,7 +107,6 @@ if gen_mode:
     print(f'This means that the generator emits {emi_sum:.3f} tons of CO2')
 
 # Shows an average through the plot. Window is chosen as how many hours are made into one
-sys.exit()
 timestep = 1000
 ave_con = average_plot(X, consumption, timestep)
 if bat_mode:
@@ -127,7 +122,7 @@ plt.ylabel('kW')
 plt.plot(idx, consumption, label='Consumption')
 plt.plot(idx, ave_con, label='Average Consumption')
 if bat_mode:
-    plt.plot(idx, chosen_average, 'c', label='Battery')
+    plt.plot(idx, chosen_average, 'g', label='Battery')
 if gen_mode:
     plt.plot(idx, gen_ave, 'r', label='Generator')
 plt.plot(idx, other_average, 'm', label='Max Output')
