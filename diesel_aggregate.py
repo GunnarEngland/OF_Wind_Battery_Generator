@@ -20,7 +20,7 @@ import numpy as np
 # -------------------------------------------------------------------
 
 
-def gen_drain(needed, battery, max_charge, capacity, drained, gen):
+def gen_drain(needed, battery, max_charge, capacity, drained, charged, gen):
     missing = 0.0
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
     kwh = needed
@@ -29,8 +29,8 @@ def gen_drain(needed, battery, max_charge, capacity, drained, gen):
         surplus = gen_eff - needed
         least = min(max_charge, surplus)  # least is how much the battery can be charged
         if least > 0 and drained is False:
-            battery, surplus = battery_charge(battery, max_charge, capacity, least)
-            kwh = needed + battery - battery_old - surplus
+            battery, charge, surplus = battery_charge(battery, max_charge, capacity, least, charged)
+            kwh = needed + battery - battery_old
         else:
             kwh = needed
     elif gen_eff <= needed:

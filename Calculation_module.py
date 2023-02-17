@@ -19,34 +19,38 @@ def wind_bat_gen(power_output, consumption, X, gen):
     battery = lower_capacity
     operative = 0
     on = 0
-    depleted = 0
+
     f = efficiency_curve()
     for x in X:
-        drained = False
+        drained = False  # If the battery has been drained, then True
+        depleted = 0  # How much the battery has been drained this hour
+        charged = 0  # How much the battery has been charged this hour
         if battery > 0.6 * battery_capacity and operative > 5:
             generator_mode = False
             operative = 0
         # generator_mode, operative = gen_mode(battery, battery_capacity, operative)
         if power_output[x] > consumption[x]:
-            battery, surplus = battery_charge(battery, max_charge, battery_capacity, (power_output[x] - consumption[x]))
+            battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
+                                                       (power_output[x] - consumption[x]), charged)
         elif power_output[x] < consumption[x]:  # checks if output from wind does not cover consumption
             battery_old = battery
             battery, min_charge, ba_neg = battery_deplete(battery,
                                                           (consumption[x] - power_output[x]), lower_capacity,
                                                           battery_capacity)
             drained = True
+            needed[x] = ba_neg
             if min_charge:
-                needed[x] = consumption[x] - power_output[x] - battery_old - battery + ba_neg
                 # generator_mode, operative = gen_mode(battery, battery_capacity, operative)
                 if not generator_mode and needed[x] > 0:
                     generator_mode = True
+            # elif not min_charge:
             depleted = battery_old - battery
         if generator_mode:  # Checks if generator is on
             if consumption[x] > power_output[x]:
                 needed[x] = consumption[x] - power_output[x] - depleted
                 diesel_kwh[x], battery, missing = gen_drain(needed[x], battery, max_charge,
-                                                            battery_capacity, drained, gen)
-            # battery = battery_charge(battery, max_charge, battery_capacity, max_charge)
+                                                            battery_capacity, drained, charged, gen)
+                # battery = battery_charge(battery, max_charge, battery_capacity, max_charge)
                 needed[x] = needed[x] - diesel_kwh[x] + missing
             operative += 1
             on += 1

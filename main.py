@@ -87,7 +87,9 @@ for x in X:
         needed[x] = 0
     elif max_output[x] < consumption[x]:
         not_enough += 1
+        needed[x] = consumption[x] - max_output[x]
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
+print(f'The energy needed sums up to {np.sum(needed):,.3f} kWh')
 was_sum = np.sum(wasted)
 was_max = np.max(wasted)
 print(f'The amount wasted is {was_sum:,.3f} kWh, and max in an hour is {was_max:,.3f} kWh')
@@ -133,7 +135,3 @@ plt.show()
 
 print('Program ended.')
 
-
-#  Add method to only use wind, only battery, only generator and different combinations
-#  Create a Monte Carlo simulation that takes random years into a 20-year calculation
-#  Do this with consumption as well
