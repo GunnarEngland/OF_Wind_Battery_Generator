@@ -32,6 +32,7 @@ def wind_bat_gen(power_output, consumption, X, gen):
         if power_output[x] > consumption[x]:
             battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
                                                        (power_output[x] - consumption[x]), charged)
+            needed[x] = 0
         elif power_output[x] < consumption[x]:  # checks if output from wind does not cover consumption
             battery_old = battery
             battery, min_charge, ba_neg = battery_deplete(battery,
@@ -51,7 +52,11 @@ def wind_bat_gen(power_output, consumption, X, gen):
                 diesel_kwh[x], battery, missing = gen_drain(needed[x], battery, max_charge,
                                                             battery_capacity, drained, charged, gen)
                 # battery = battery_charge(battery, max_charge, battery_capacity, max_charge)
-                needed[x] = needed[x] - diesel_kwh[x] + missing
+                needed[x] = consumption[x] - power_output[x] - diesel_kwh[x] - depleted + missing
+            elif power_output[x] > consumption[x]:
+                if not drained:
+                    battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
+                                                               0.3*gen, charged)
             operative += 1
             on += 1
         if needed[x] < 0:

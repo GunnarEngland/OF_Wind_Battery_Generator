@@ -4,19 +4,15 @@
 
 
 def battery_charge(battery, max_charge, capacity, charge, charged):
-    surplus = 0
     if charged > 0:  # If the battery has been charged earlier, will decrease max_charge capacity by said amount
         max_charge = max_charge - charged
     charge = min(charge, max_charge)
-    if charge > max_charge:
-        battery = battery + max_charge
-        surplus = charge - max_charge
-    else:
-        battery = battery + charge
+    battery = battery + max_charge
+    surplus = charge - max_charge
     if battery > capacity:  # Prevents battery from exceeding max
         surplus = surplus + battery - capacity
         battery = capacity
-    return battery, charge, surplus
+    return battery, charged + charge, surplus
 
 
 def battery_deplete(battery, depletion, lower_capacity, upper_capacity):

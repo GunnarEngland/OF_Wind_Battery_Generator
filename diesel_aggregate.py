@@ -23,7 +23,6 @@ import numpy as np
 def gen_drain(needed, battery, max_charge, capacity, drained, charged, gen):
     missing = 0.0
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
-    kwh = needed
     battery_old = battery
     if gen_eff > needed:
         surplus = gen_eff - needed
