@@ -19,7 +19,6 @@ def wind_bat_gen(power_output, consumption, X, gen):
     battery = lower_capacity
     operative = 0
     on = 0
-
     f = efficiency_curve()
     for x in X:
         drained = False  # If the battery has been drained, then True

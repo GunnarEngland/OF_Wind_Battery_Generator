@@ -25,11 +25,13 @@ def battery_deplete(battery, depletion, lower_capacity, upper_capacity):
         depletion = max_depletion
     battery = battery - depletion
     if battery < lower_capacity:
-        ba_neg = lower_capacity - battery
+        ba_neg = lower_capacity - battery  # If the battery lacks capacity to cover depletion
         battery = lower_capacity
         lower = True
     elif battery > upper_capacity:
         wasted = battery - upper_capacity
         battery = upper_capacity
     ba_neg = ba_neg + needed
+    if ba_neg > 0:
+        lower = True
     return battery, lower, ba_neg
