@@ -4,6 +4,7 @@ import numpy as np
 
 
 def wind_module(wind, x, f):
+
     power_output = []
     cutin = x[0]
     cutout = x[-1]

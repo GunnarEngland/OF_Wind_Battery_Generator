@@ -47,9 +47,6 @@ if wind_mode:
         y_value = [i * n_turbine for i in y_value]
 #  Wind height
     h = hub_height[-1]  # Set desirable wind height
-
-    if h < 101:
-        h = 101  # Temporary fix, fix when 50 masl is gathered.
     c_wind, b_same = c_height(wind, h)  # Calls wind_height module
     c_name = 'Wind Speed ' + str(h)  # Sets name of column
     if not b_same:
@@ -59,7 +56,7 @@ if wind_mode:
     f = interpolate.interp1d(x_value, y_value, kind='cubic')
 
 # Wind module
-    power_output = wind_module(c_wind[f'{c_name}'], x_value, f)
+    power_output = wind_module(c_wind, x_value, f)
 
 # Shows plot for power curve and interpolation
 gen = 4000
