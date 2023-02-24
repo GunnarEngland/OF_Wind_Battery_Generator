@@ -49,7 +49,7 @@ def wind_bat_gen(power_output, consumption, X, gen):
             if consumption[x] > power_output[x]:
                 needed[x] = consumption[x] - power_output[x] - depleted
                 diesel_kwh[x], battery, missing = gen_drain(needed[x], battery, max_charge,
-                                                            battery_capacity, drained, charged, gen)
+                                                            battery_capacity, drained, charged, gen, f)
                 # battery = battery_charge(battery, max_charge, battery_capacity, max_charge)
                 needed[x] = consumption[x] - power_output[x] - diesel_kwh[x] - depleted + missing
             elif power_output[x] > consumption[x]:

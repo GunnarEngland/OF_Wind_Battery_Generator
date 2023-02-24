@@ -9,16 +9,20 @@ from string_to_float import string_to_float
 from average import average_plot
 from Calculation_module import wind_bat_gen, bat_gen, gen_solo, wind_bat
 from Battery_module import battery_charge, battery_deplete
-from diesel_aggregate import gen_drain, co2_emission
+from diesel_aggregate import gen_drain, co2_emission, efficiency_curve
 from monte_carlo import monte_carlo_simulation
 from Consumption_length import consumption_length, list_consumption
-from plotting import power_curve_plot
+from plotting import power_curve_plot, engine_plot
 import sys
 
 # Chose what is active, wind, battery and generator
 wind_mode = True
 bat_mode = True
 gen_mode = True
+
+f, x_eff, y_eff = efficiency_curve()
+engine_plot(f, x_eff, y_eff)
+sys.exit()
 
 # Read wind data and consumption data from csv
 if wind_mode:

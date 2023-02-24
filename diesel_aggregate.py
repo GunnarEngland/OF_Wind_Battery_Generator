@@ -20,7 +20,7 @@ import numpy as np
 # -------------------------------------------------------------------
 
 
-def gen_drain(needed, battery, max_charge, capacity, drained, charged, gen):
+def gen_drain(needed, battery, max_charge, capacity, drained, charged, gen, f):
     missing = 0.0
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
     battery_old = battery
@@ -58,4 +58,4 @@ def efficiency_curve():
     x_eff = range(0, 1400, 100)  # len() = 14
     y_eff = [0.0, 6.5, 13, 17.5, 21.5, 25, 28, 30.5, 32, 33, 34, 34.5, 34.75, 35]
     f = interpolate.interp1d(x_eff, y_eff, kind='cubic')
-    return f
+    return f, x_eff, y_eff
