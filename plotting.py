@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from average import average_plot
 
 
@@ -44,3 +43,15 @@ def engine_plot(diesel_eff, x_eff, y_eff):
     plt.show()
     return
 
+
+def basic_plot(df, k, l, name, y_label):
+    for i in range(k):
+        for j in range(l):
+            ave = average_plot(df['time'], df[f'{i},{j}'], 1000)
+            plt.plot(df['time'], ave, label=f'{i},{j}')
+    plt.title(name)
+    plt.legend(loc='upper right')
+    plt.xlabel('Time')
+    plt.ylabel(y_label)
+    plt.show()
+    return

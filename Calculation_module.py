@@ -3,10 +3,9 @@ from Battery_module import battery_charge, battery_deplete
 from diesel_aggregate import gen_drain, efficiency_curve, co2_emission
 
 
-def wind_bat_gen(power_output, consumption, X, gen):
+def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     # Battery module
     pack = 60.00  # One module of battery in kWh
-    n_batteries = 20  # Amount of modules
     battery_capacity = n_batteries * pack  # Max capacity for batteries
     lower_capacity = 0.1 * battery_capacity
     max_charge = 6 * n_batteries  # How much a battery can charge in an hour

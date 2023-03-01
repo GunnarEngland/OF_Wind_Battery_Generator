@@ -12,7 +12,7 @@ from Battery_module import battery_charge, battery_deplete
 from diesel_aggregate import gen_drain, co2_emission, efficiency_curve
 from monte_carlo import monte_carlo_simulation
 from Consumption_length import consumption_length, list_consumption
-from plotting import power_curve_plot, engine_plot
+from plotting import power_curve_plot, engine_plot, basic_plot
 import sys
 
 # Chose what is active, wind, battery and generator
@@ -20,9 +20,8 @@ wind_mode = True
 bat_mode = True
 gen_mode = True
 
-f, x_eff, y_eff = efficiency_curve()
-engine_plot(f, x_eff, y_eff)
-sys.exit()
+f = efficiency_curve()
+#engine_plot(f, x_eff, y_eff)
 
 # Read wind data and consumption data from csv
 if wind_mode:
@@ -34,27 +33,35 @@ X = np.arange(0, len(consumption), 1)
 idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
 read_consumption = read_consumption.set_index([idx])
 
-
+n_turbines = [1, 2, 3]
+bat_packs = [10, 15, 20, 25]
+#at_packs = [20]
+total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
 if wind_mode:
     name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x
     turbine, turbines = turbineinfo(name)
-    n_turbine = 2
 
 # String splitting
     x_value = string_to_float(turbine.power_curve_wind_speeds)
     y_value = string_to_float(turbine.power_curve_values)
     hub_height = string_to_float(turbine.hub_height)
 
-    if n_turbine > 1:
-        y_value = [i * n_turbine for i in y_value]
-#  Wind height
+    #  Wind height
     h = hub_height[-1]  # Set desirable wind height
     c_wind, b_same = c_height(wind, h)  # Calls wind_height module
     c_name = 'Wind Speed ' + str(h)  # Sets name of column
     if not b_same:
         wind[c_name] = np.array(c_wind)  # Adds new wind speed into dataframe with column-name c_name
+df_generator = pd.DataFrame()
+df_generator['time'] = idx
+df_max = pd.DataFrame()
+df_max['time'] = idx
+for i in range(len(n_turbines)):
+
+    if n_turbines[i] > 1:
+        y_value = [x * n_turbines[i] for x in y_value]
 
 # Interpolating the power curve
     f = interpolate.interp1d(x_value, y_value, kind='cubic')
@@ -62,33 +69,43 @@ if wind_mode:
 # Wind module
     power_output = wind_module(c_wind, x_value, f)
 
-# Shows plot for power curve and interpolation
-gen = 4000
-diesel_kwh = [0] * len(X)
-on = 0
-b_list = [0] * len(X)
+    for j in range(len(bat_packs)):
+        gen = 4000
+        diesel_kwh = [0] * len(X)
+        on = 0
+        b_list = [0] * len(X)
 
 # Combo True False True does not exist - value?
 
-if wind_mode and bat_mode and gen_mode:
-    max_output, b_list, diesel_kwh, on, needed, emission = wind_bat_gen(power_output, consumption, X, gen)
-if wind_mode is False and bat_mode and gen_mode:
-    max_output, needed, diesel_kwh, b_list, on, emission = bat_gen(consumption, X, gen)  # Currently not working, gen negative
-if wind_mode is True and bat_mode is True and gen_mode is False:
-    max_output, needed, b_list = wind_bat(power_output, consumption, X)
-if wind_mode is False and bat_mode is False and gen_mode is True:
-    max_output, needed, diesel_kwh, on, emission = gen_solo(consumption, X, gen)
+        if wind_mode and bat_mode and gen_mode:
+            max_output, b_list, diesel_kwh, on, needed, emission = wind_bat_gen(power_output, consumption,
+                                                                                X, gen, bat_packs[j])
+        if wind_mode is False and bat_mode and gen_mode:
+            max_output, needed, diesel_kwh, b_list, on, emission = bat_gen(consumption, X, gen)  # Currently not working, gen negative
+        if wind_mode is True and bat_mode is True and gen_mode is False:
+            max_output, needed, b_list = wind_bat(power_output, consumption, X)
+        if wind_mode is False and bat_mode is False and gen_mode is True:
+            max_output, needed, diesel_kwh, on, emission = gen_solo(consumption, X, gen)
 
 # Finds amount of wasted energy
-wasted = [0] * len(X)
-not_enough = 0
-for x in X:
-    if max_output[x] > consumption[x]:
-        wasted[x] = max_output[x] - consumption[x]
-        needed[x] = 0
-    elif max_output[x] < consumption[x]:
-        not_enough += 1
-        needed[x] = consumption[x] - max_output[x]
+        wasted = [0] * len(X)
+        not_enough = 0
+        for x in X:
+            if max_output[x] > consumption[x]:
+                wasted[x] = max_output[x] - consumption[x]
+                needed[x] = 0
+            elif max_output[x] < consumption[x]:
+                not_enough += 1
+                needed[x] = consumption[x] - max_output[x]
+        df_generator[f'{i},{j}'] = diesel_kwh
+        df_max[f'{i},{j}'] = max_output
+        #gen_average = average_plot(df_generator['time'], df_generator[f'{i},{j}'], 1000)
+        #plt.plot(df_generator['time'], gen_average, label=f'{n_turbines[i]},{bat_packs[j]}')
+        print(f'Calculated scenario: {i},{j}')
+        total_gen.append(np.sum(df_generator[f'{i},{j}']))
+print(total_gen)
+basic_plot(df_generator, len(n_turbines), len(bat_packs), 'Generator comparison', 'kWh')
+sys.exit()
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
 print(f'The energy needed sums up to {np.sum(needed):,.3f} kWh')
 was_sum = np.sum(wasted)
