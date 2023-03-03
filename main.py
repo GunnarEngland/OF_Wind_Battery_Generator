@@ -20,9 +20,14 @@ wind_mode = True
 bat_mode = True
 gen_mode = True
 
-f = efficiency_curve()
-#engine_plot(f, x_eff, y_eff)
-
+x_value = [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0,
+           20.0, 21.0, 22.0, 23.0, 24.0, 25.0]
+y_value = [0.0, 10.0, 20.0, 40.0, 75.0, 105.0, 140.0, 190.0, 240.0, 290.0, 340.0, 390.0, 440.0, 490.0, 550.0, 610.0,
+           690.0, 790.0, 870.0, 930.0, 970.0, 990.0, 1000.0]
+plt.plot(x_value, y_value)
+plt.grid()
+plt.show()
+sys.exit()
 # Read wind data and consumption data from csv
 if wind_mode:
     temp_wind = pd.read_csv('FullWind.csv')
@@ -99,8 +104,6 @@ for i in range(len(n_turbines)):
                 needed[x] = consumption[x] - max_output[x]
         df_generator[f'{i},{j}'] = diesel_kwh
         df_max[f'{i},{j}'] = max_output
-        #gen_average = average_plot(df_generator['time'], df_generator[f'{i},{j}'], 1000)
-        #plt.plot(df_generator['time'], gen_average, label=f'{n_turbines[i]},{bat_packs[j]}')
         print(f'Calculated scenario: {i},{j}')
         total_gen.append(np.sum(df_generator[f'{i},{j}']))
 print(total_gen)
