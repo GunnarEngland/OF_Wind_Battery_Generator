@@ -44,10 +44,10 @@ def engine_plot(diesel_eff, x_eff, y_eff):
     return
 
 
-def basic_plot(df, k, l, name, y_label):
+def basic_plot(df, k, l, name, y_label, c_name):
     for i in range(k):
         for j in range(l):
-            ave = average_plot(df['time'], df[f'{i},{j}'], 1000)
+            ave = average_plot(df[c_name], df[f'{i},{j}'], 1000)
             plt.plot(df['time'], ave, label=f'{i},{j}')
     plt.title(name)
     plt.legend(loc='upper right')
