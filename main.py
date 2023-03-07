@@ -34,7 +34,11 @@ idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
 read_consumption = read_consumption.set_index([idx])
 
 n_turbines = [1, 2, 3]
+if not wind_mode:
+    n_turbines = [0]
 bat_packs = [10, 15, 20, 25]
+if not bat_mode:
+    bat_packs = [0]
 #at_packs = [20]
 total_gen = []
 # Select turbine
@@ -62,12 +66,12 @@ for i in range(len(n_turbines)):
 
     if n_turbines[i] > 1:
         y_value = [x * n_turbines[i] for x in y_value]
-
+    if wind_mode:
 # Interpolating the power curve
-    f = interpolate.interp1d(x_value, y_value, kind='cubic')
+        f = interpolate.interp1d(x_value, y_value, kind='cubic')
 
 # Wind module
-    power_output = wind_module(c_wind, x_value, f)
+        power_output = wind_module(c_wind, x_value, f)
 
     for j in range(len(bat_packs)):
         gen = 4000
@@ -86,7 +90,6 @@ for i in range(len(n_turbines)):
             max_output, needed, b_list = wind_bat(power_output, consumption, X)
         if wind_mode is False and bat_mode is False and gen_mode is True:
             max_output, needed, diesel_kwh, on, emission = gen_solo(consumption, X, gen)
-
 # Finds amount of wasted energy
         wasted = [0] * len(X)
         not_enough = 0
@@ -103,9 +106,9 @@ for i in range(len(n_turbines)):
         #plt.plot(df_generator['time'], gen_average, label=f'{n_turbines[i]},{bat_packs[j]}')
         print(f'Calculated scenario: {i},{j}')
         total_gen.append(np.sum(df_generator[f'{i},{j}']))
+
 print(total_gen)
-basic_plot(df_generator, len(n_turbines), len(bat_packs), 'Generator comparison', 'kWh')
-sys.exit()
+basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
 print(f'The energy needed sums up to {np.sum(needed):,.3f} kWh')
 was_sum = np.sum(wasted)
