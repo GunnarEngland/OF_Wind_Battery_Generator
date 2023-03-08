@@ -12,7 +12,7 @@ from Battery_module import battery_charge, battery_deplete
 from diesel_aggregate import gen_drain, co2_emission, efficiency_curve
 from monte_carlo import monte_carlo_simulation
 from Consumption_length import consumption_length, list_consumption
-from plotting import power_curve_plot, engine_plot, basic_plot
+from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot
 import sys
 
 # Chose what is active, wind, battery and generator
@@ -36,7 +36,6 @@ if not wind_mode:
 bat_packs = [10, 15, 20, 25]
 if not bat_mode:
     bat_packs = [0]
-#at_packs = [20]
 total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
@@ -64,10 +63,10 @@ for i in range(len(n_turbines)):
     if n_turbines[i] > 1:
         y_value = [x * n_turbines[i] for x in y_value]
     if wind_mode:
-# Interpolating the power curve
+        # Interpolating the power curve
         f = interpolate.interp1d(x_value, y_value, kind='cubic')
 
-# Wind module
+        # Going from wind data to power output, through the use of the power curve
         power_output = wind_module(c_wind, x_value, f)
 
     for j in range(len(bat_packs)):
@@ -103,7 +102,9 @@ for i in range(len(n_turbines)):
         total_gen.append(np.sum(df_generator[f'{i},{j}']))
 
 print(total_gen)
-basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
+bar_plot(total_gen, "Summed kWh produced by generator", "Generator produced kWh by scenario")
+sys.exit()
+#basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
 print(f'The energy needed sums up to {np.sum(needed):,.3f} kWh')
 was_sum = np.sum(wasted)
