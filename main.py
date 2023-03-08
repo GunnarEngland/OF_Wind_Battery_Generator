@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
-from wind_turbineinfo import turbineinfo
+from wind_turbineinfo import turbineinfo, set_info
 from Wind_module import wind_module, wind_split, wind_merge, mergetest, splittest
 from wind_height import c_height
 from string_to_float import string_to_float
@@ -20,14 +20,6 @@ wind_mode = True
 bat_mode = True
 gen_mode = True
 
-x_value = [3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0,
-           20.0, 21.0, 22.0, 23.0, 24.0, 25.0]
-y_value = [0.0, 10.0, 20.0, 40.0, 75.0, 105.0, 140.0, 190.0, 240.0, 290.0, 340.0, 390.0, 440.0, 490.0, 550.0, 610.0,
-           690.0, 790.0, 870.0, 930.0, 970.0, 990.0, 1000.0]
-plt.plot(x_value, y_value)
-plt.grid()
-plt.show()
-sys.exit()
 # Read wind data and consumption data from csv
 if wind_mode:
     temp_wind = pd.read_csv('FullWind.csv')
