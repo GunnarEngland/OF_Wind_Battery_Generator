@@ -10,30 +10,36 @@ from average import average_plot
 from Calculation_module import wind_bat_gen, bat_gen, gen_solo, wind_bat
 from Battery_module import battery_charge, battery_deplete
 from diesel_aggregate import gen_drain, co2_emission, efficiency_curve
-from monte_carlo import monte_carlo_simulation
+from monte_carlo import monte_carlo_simulation, non_random
 from Consumption_length import consumption_length, list_consumption
 from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot
 import sys
 
 # Chose what is active, wind, battery and generator
-wind_mode = True
-bat_mode = True
+wind_mode = False
+bat_mode = False
 gen_mode = True
-
+mcr = False
 # Read wind data and consumption data from csv
 if wind_mode:
     temp_wind = pd.read_csv('FullWind.csv')
-    wind = monte_carlo_simulation(temp_wind)
+    if mcr:
+        wind = monte_carlo_simulation(temp_wind)
+    else:
+        wind = non_random(temp_wind)
+
 read_consumption = pd.read_csv('con_full.csv')
 consumption = read_consumption['0'].values.tolist()
 X = np.arange(0, len(consumption), 1)
 idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
 read_consumption = read_consumption.set_index([idx])
 
-n_turbines = [1, 2, 3]
+#n_turbines = [1, 2, 3]
+n_turbines = [1]
 if not wind_mode:
     n_turbines = [0]
-bat_packs = [10, 15, 20, 25]
+#bat_packs = [10, 15, 20, 25]
+bat_packs = [15]
 if not bat_mode:
     bat_packs = [0]
 total_gen = []
@@ -102,28 +108,28 @@ for i in range(len(n_turbines)):
         total_gen.append(np.sum(df_generator[f'{i},{j}']))
 
 print(total_gen)
-bar_plot(total_gen, "Summed kWh produced by generator", "Generator produced kWh by scenario")
-sys.exit()
+#bar_plot(total_gen, "Summed kWh produced by generator", "Generator produced kWh by scenario")
 #basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
+print(f"The maximum energy produced adds up to {np.sum(max_output): .3f}.")
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
-print(f'The energy needed sums up to {np.sum(needed):,.3f} kWh')
+print(f'The energy needed sums up to {np.sum(needed)} kWh')
 was_sum = np.sum(wasted)
 was_max = np.max(wasted)
-print(f'The amount wasted is {was_sum:,.3f} kWh, and max in an hour is {was_max:,.3f} kWh')
+print(f'The amount wasted is {was_sum: .3f} kWh, and max in an hour is {was_max: .3f} kWh')
 
 con_sum = np.sum(consumption)
 d_sum = np.sum(diesel_kwh)
 per = (d_sum/con_sum)*100
 if gen_mode:
     emi_sum = np.sum(emission)/1000
-print(f'Sum of energy from consumption is {con_sum:,.3f} kWh')
-print(f'Sum of energy from diesel is {d_sum:,.3f} kWh')
+print(f'Sum of energy from consumption is {con_sum: .3f} kWh')
+print(f'Sum of energy from diesel is {d_sum: .3f} kWh')
 print(f'Part of energy from diesel is {per:3.2f} percent')
 #print(max(c_list))
 #print(np.mean(c_list))
 print('Hours generator is on:', on)
 if gen_mode:
-    print(f'This means that the generator emits {emi_sum:.3f} tons of CO2')
+    print(f'This means that the generator emits {emi_sum: .3f} tons of CO2')
 
 # Shows an average through the plot. Window is chosen as how many hours are made into one
 timestep = 1000
@@ -148,6 +154,7 @@ plt.plot(idx, other_average, 'm', label='Max Output')
 plt.plot(idx, need_ave, label='Needed')
 #plt.plot(idx, c_list_average, 'g', label='C_list')
 plt.legend(loc='upper left')
+plt.title("Base case")
 plt.show()
 
 print('Program ended.')
