@@ -34,10 +34,13 @@ X = np.arange(0, len(consumption), 1)
 idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
 read_consumption = read_consumption.set_index([idx])
 
+
+#  Choose number of turbines
 #n_turbines = [1, 2, 3]
 n_turbines = [1]
 if not wind_mode:
     n_turbines = [0]
+#  Choose number of battery packs
 #bat_packs = [10, 15, 20, 25]
 bat_packs = [15]
 if not bat_mode:
