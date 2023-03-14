@@ -16,8 +16,8 @@ from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot
 import sys
 
 # Chose what is active, wind, battery and generator
-wind_mode = False
-bat_mode = False
+wind_mode = True
+bat_mode = True
 gen_mode = True
 mcr = False
 # Read wind data and consumption data from csv
@@ -157,7 +157,7 @@ plt.plot(idx, other_average, 'm', label='Max Output')
 plt.plot(idx, need_ave, label='Needed')
 #plt.plot(idx, c_list_average, 'g', label='C_list')
 plt.legend(loc='upper left')
-plt.title("Base case")
+plt.title("0,1")
 plt.show()
 
 print('Program ended.')

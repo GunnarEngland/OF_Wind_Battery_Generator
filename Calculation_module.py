@@ -51,6 +51,10 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
                                                             battery_capacity, drained, charged, gen, f)
                 # battery = battery_charge(battery, max_charge, battery_capacity, max_charge)
                 needed[x] = consumption[x] - power_output[x] - diesel_kwh[x] - depleted + missing
+
+            #  Not sure if this elif is needed? battery_charge is already embedded in gen_drain if surplus > 0.
+            #  Also embedded above in elif power_output > consumption outside gen_mode
+            #  Little to no change in removing both the charge below and inside gen_drain for scenario 0,1
             elif power_output[x] > consumption[x]:
                 if not drained:
                     battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
