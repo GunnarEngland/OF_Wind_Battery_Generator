@@ -1,5 +1,5 @@
 #  Should have three different if not more def() that depend on inputs
-from Battery_module import battery_charge, battery_deplete
+from Battery_module import battery_charge, battery_deplete, bat_test
 from diesel_aggregate import gen_drain, efficiency_curve, co2_emission
 
 
@@ -27,25 +27,29 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
             generator_mode = False
             operative = 0
         # generator_mode, operative = gen_mode(battery, battery_capacity, operative)
-        if power_output[x] > consumption[x]:
-            battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
-                                                       (power_output[x] - consumption[x]), charged)
-            needed[x] = 0
-        elif power_output[x] < consumption[x]:  # checks if output from wind does not cover consumption
-            battery_old = battery
-            battery, min_charge, ba_neg = battery_deplete(battery,
-                                                          (consumption[x] - power_output[x]), lower_capacity,
-                                                          battery_capacity)
-            drained = True
-            needed[x] = ba_neg
-            if min_charge:
+        battery_old = battery
+        battery, min_charge, missing, change = bat_test(battery, power_output[x], consumption[x], max_charge,
+                                                        battery_capacity)
+        needed[x] = missing
+        #if power_output[x] > consumption[x]:
+        #    battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
+        #                                               (power_output[x] - consumption[x]), charged)
+        #    needed[x] = 0
+        #elif power_output[x] < consumption[x]:  # checks if output from wind does not cover consumption
+        #    battery_old = battery
+        #    battery, min_charge, ba_neg = battery_deplete(battery,
+        #                                                  (consumption[x] - power_output[x]), lower_capacity,
+        #                                                  battery_capacity)
+        #    drained = True
+        #    needed[x] = ba_neg
+        if min_charge:
                 # generator_mode, operative = gen_mode(battery, battery_capacity, operative)
-                if not generator_mode and needed[x] > 0:
-                    generator_mode = True
+            if not generator_mode and needed[x] > 0:
+                generator_mode = True
             # elif not min_charge:
-            depleted = battery_old - battery
+        depleted = battery_old - battery
         if generator_mode:  # Checks if generator is on
-            if consumption[x] > power_output[x]:
+            if consumption[x] > power_output[x] + depleted:
                 needed[x] = consumption[x] - power_output[x] - depleted
                 diesel_kwh[x], battery, missing = gen_drain(needed[x], battery, max_charge,
                                                             battery_capacity, drained, charged, gen, f)
@@ -55,7 +59,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
             #  Not sure if this elif is needed? battery_charge is already embedded in gen_drain if surplus > 0.
             #  Also embedded above in elif power_output > consumption outside gen_mode
             #  Little to no change in removing both the charge below and inside gen_drain for scenario 0,1
-            elif power_output[x] > consumption[x]:
+            elif power_output[x] + depleted > consumption[x]:
                 if not drained:
                     battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
                                                                0.3*gen, charged)
@@ -65,7 +69,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
             needed[x] = 0
         if diesel_kwh[x] < 0:
             diesel_kwh[x] = 0
-        max_output[x] = power_output[x] + depleted + (diesel_kwh[x])
+        max_output[x] = power_output[x] + depleted + diesel_kwh[x]
         b_list.append(battery)
         emission[x] = co2_emission(f, diesel_kwh[x], 0.25)
 

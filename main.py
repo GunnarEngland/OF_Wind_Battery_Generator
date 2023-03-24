@@ -37,12 +37,12 @@ read_consumption = read_consumption.set_index([idx])
 
 #  Choose number of turbines
 #n_turbines = [1, 2, 3]
-n_turbines = [1]
+n_turbines = [2]
 if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
 #bat_packs = [10, 15, 20, 25]
-bat_packs = [15]
+bat_packs = [25]
 if not bat_mode:
     bat_packs = [0]
 total_gen = []

@@ -27,8 +27,9 @@ def gen_drain(needed, battery, max_charge, capacity, drained, charged, gen, f):
     if gen_eff > needed:
         surplus = gen_eff - needed
         least = min(max_charge, surplus)  # least is how much the battery can be charged
-        if least > 0 and drained is False:
+        if least > 0 and drained is False and battery < 0.5 * capacity:
             battery, charge, surplus = battery_charge(battery, max_charge, capacity, least, charged)
+            #battery, lower, missing, change = bat_test(battery, output, consumption, max_charge, capacity)
             kwh = needed + battery - battery_old
         else:
             kwh = needed
