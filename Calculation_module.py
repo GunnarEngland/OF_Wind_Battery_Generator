@@ -8,7 +8,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     pack = 60.00  # One module of battery in kWh
     battery_capacity = n_batteries * pack  # Max capacity for batteries
     lower_capacity = 0.1 * battery_capacity
-    max_charge = 6 * n_batteries  # How much a battery can charge in an hour
+    max_charge = 12 * n_batteries  # How much a battery can charge in an hour
     max_output = power_output.copy()
     needed = [0] * len(X)
     diesel_kwh = [0] * len(X)
@@ -20,51 +20,24 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     on = 0
     f = efficiency_curve()
     for x in X:
-        drained = False  # If the battery has been drained, then True
-        depleted = 0  # How much the battery has been drained this hour
-        charged = 0  # How much the battery has been charged this hour
-        if battery > 0.6 * battery_capacity and operative > 5:
+        if battery > 0.5 * battery_capacity and operative > 3:
             generator_mode = False
             operative = 0
+        needed[x] = consumption[x] - power_output[x]
         # generator_mode, operative = gen_mode(battery, battery_capacity, operative)
         battery_old = battery
         battery, min_charge, missing, change = bat_test(battery, power_output[x], consumption[x], max_charge,
-                                                        battery_capacity)
+                                                        battery_capacity, needed[x])
         needed[x] = missing
-        #if power_output[x] > consumption[x]:
-        #    battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
-        #                                               (power_output[x] - consumption[x]), charged)
-        #    needed[x] = 0
-        #elif power_output[x] < consumption[x]:  # checks if output from wind does not cover consumption
-        #    battery_old = battery
-        #    battery, min_charge, ba_neg = battery_deplete(battery,
-        #                                                  (consumption[x] - power_output[x]), lower_capacity,
-        #                                                  battery_capacity)
-        #    drained = True
-        #    needed[x] = ba_neg
-        if min_charge:
-                # generator_mode, operative = gen_mode(battery, battery_capacity, operative)
-            if not generator_mode and needed[x] > 0:
-                generator_mode = True
-            # elif not min_charge:
-        depleted = battery_old - battery
-        if generator_mode:  # Checks if generator is on
-            if consumption[x] > power_output[x] + depleted:
-                needed[x] = consumption[x] - power_output[x] - depleted
-                diesel_kwh[x], battery, missing = gen_drain(needed[x], battery, max_charge,
-                                                            battery_capacity, drained, charged, gen, f)
-                # battery = battery_charge(battery, max_charge, battery_capacity, max_charge)
-                needed[x] = consumption[x] - power_output[x] - diesel_kwh[x] - depleted + missing
 
-            #  Not sure if this elif is needed? battery_charge is already embedded in gen_drain if surplus > 0.
-            #  Also embedded above in elif power_output > consumption outside gen_mode
-            #  Little to no change in removing both the charge below and inside gen_drain for scenario 0,1
-            elif power_output[x] + depleted > consumption[x]:
-                if not drained:
-                    battery, charged, surplus = battery_charge(battery, max_charge, battery_capacity,
-                                                               0.3*gen, charged)
+        if min_charge:
+            generator_mode = True
+        if generator_mode:  # Checks if generator is on
+            diesel_kwh[x], battery, needed[x], change = gen_drain(needed[x], consumption[x], power_output[x], battery,
+                                                                  max_charge, battery_capacity, change, gen)
             operative += 1
             on += 1
+        depleted = battery_old - battery
         if needed[x] < 0:
             needed[x] = 0
         if diesel_kwh[x] < 0:

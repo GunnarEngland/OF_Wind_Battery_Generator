@@ -1,5 +1,5 @@
 # Ocean Farm 1 currently uses 3 times 184 kW diesel generators according to Sindre
-from Battery_module import battery_charge
+from Battery_module import battery_charge, bat_test
 from scipy import interpolate
 import numpy as np
 
@@ -20,23 +20,16 @@ import numpy as np
 # -------------------------------------------------------------------
 
 
-def gen_drain(needed, battery, max_charge, capacity, drained, charged, gen, f):
-    missing = 0.0
+def gen_drain(needed, consumption, output, battery, max_charge, capacity, change, gen):
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
     battery_old = battery
     if gen_eff > needed:
-        surplus = gen_eff - needed
-        least = min(max_charge, surplus)  # least is how much the battery can be charged
-        if least > 0 and drained is False and battery < 0.5 * capacity:
-            battery, charge, surplus = battery_charge(battery, max_charge, capacity, least, charged)
-            #battery, lower, missing, change = bat_test(battery, output, consumption, max_charge, capacity)
-            kwh = needed + battery - battery_old
-        else:
-            kwh = needed
+        kwh = needed + max(battery - battery_old, 0)
     elif gen_eff <= needed:
         missing = needed - gen_eff
         kwh = gen_eff
-    return kwh, battery, missing
+    missing = max(consumption - output - change - kwh, 0)
+    return kwh, battery, missing, change
 
 
 def gen_mode(battery, max_capacity, operative):

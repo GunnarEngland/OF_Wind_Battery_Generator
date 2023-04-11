@@ -74,7 +74,6 @@ for i in range(len(n_turbines)):
     if wind_mode:
         # Interpolating the power curve
         f = interpolate.interp1d(x_value, y_value, kind='cubic')
-
         # Going from wind data to power output, through the use of the power curve
         power_output = wind_module(c_wind, x_value, f)
 
