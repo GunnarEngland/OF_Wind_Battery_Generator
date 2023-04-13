@@ -21,7 +21,8 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     not_enough = 0
     wasted = [0] * len(X)
     for x in X:
-        generator_mode = False
+        if battery > 0.5 * battery_capacity and operative > 3:
+            generator_mode = False
         needed[x] = consumption[x] - power_output[x]
         battery_old = battery
         battery, min_charge, needed[x], change = bat_test(battery, max_charge, battery_capacity, needed[x])

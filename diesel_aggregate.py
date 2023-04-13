@@ -32,6 +32,8 @@ def gen_drain(needed, battery, max_charge, capacity, change, gen):
         kwh = gen_eff
         needed = needed - gen_eff
     missing = max(needed, 0)
+    if kwh < 0:
+        kwh = 0
     return kwh, battery, missing, change
 
 

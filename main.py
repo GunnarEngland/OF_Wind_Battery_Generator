@@ -41,14 +41,15 @@ if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
 #bat_packs = [10, 15, 20, 25]
-bat_packs = [50]
+#bat_packs = [20, 30, 40, 50]
+bat_packs = [20]
 if not bat_mode:
     bat_packs = [0]
 total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
 if wind_mode:
-    name = 'GE 2.5-120'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
+    name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
     turbine, turbines = turbineinfo(name)
 
 # String splitting
