@@ -42,7 +42,7 @@ if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
 #bat_packs = [10, 15, 20, 25]
-bat_packs = [25]
+bat_packs = [10]
 if not bat_mode:
     bat_packs = [0]
 total_gen = []
@@ -86,24 +86,14 @@ for i in range(len(n_turbines)):
 # Combo True False True does not exist - value?
 
         if wind_mode and bat_mode and gen_mode:
-            max_output, b_list, diesel_kwh, on, needed, emission = wind_bat_gen(power_output, consumption,
-                                                                                X, gen, bat_packs[j])
+            max_output, b_list, diesel_kwh, on, needed, emission, not_enough, wasted = \
+                wind_bat_gen(power_output, consumption, X, gen, bat_packs[j])
         if wind_mode is False and bat_mode and gen_mode:
             max_output, needed, diesel_kwh, b_list, on, emission = bat_gen(consumption, X, gen)  # Currently not working, gen negative
         if wind_mode is True and bat_mode is True and gen_mode is False:
             max_output, needed, b_list = wind_bat(power_output, consumption, X)
         if wind_mode is False and bat_mode is False and gen_mode is True:
             max_output, needed, diesel_kwh, on, emission = gen_solo(consumption, X, gen)
-# Finds amount of wasted energy
-        wasted = [0] * len(X)
-        not_enough = 0
-        for x in X:
-            if max_output[x] > consumption[x]:
-                wasted[x] = max_output[x] - consumption[x]
-                needed[x] = 0
-            elif max_output[x] < consumption[x]:
-                not_enough += 1
-                needed[x] = consumption[x] - max_output[x]
         df_generator[f'{i},{j}'] = diesel_kwh
         df_max[f'{i},{j}'] = max_output
         print(f'Calculated scenario: {i},{j}')
@@ -112,26 +102,17 @@ for i in range(len(n_turbines)):
 print(total_gen)
 #bar_plot(total_gen, "Summed kWh produced by generator", "Generator produced kWh by scenario")
 #basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
-print(f"The maximum energy produced adds up to {np.sum(max_output): .3f}.")
+print(f'The wind turbines produces {np.sum(power_output): .3f} kWh.')
+print(f"The maximum energy produced adds up to {np.sum(max_output): .3f} kWh.")
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
 print(f'The energy needed sums up to {np.sum(needed)} kWh')
-was_sum = np.sum(wasted)
-was_max = np.max(wasted)
-print(f'The amount wasted is {was_sum: .3f} kWh, and max in an hour is {was_max: .3f} kWh')
-
-con_sum = np.sum(consumption)
-d_sum = np.sum(diesel_kwh)
-per = (d_sum/con_sum)*100
-if gen_mode:
-    emi_sum = np.sum(emission)/1000
-print(f'Sum of energy from consumption is {con_sum: .3f} kWh')
-print(f'Sum of energy from diesel is {d_sum: .3f} kWh')
-print(f'Part of energy from diesel is {per:3.2f} percent')
-#print(max(c_list))
-#print(np.mean(c_list))
+print(f'The amount wasted is {np.sum(wasted): .3f} kWh, and max in an hour is {np.max(wasted): .3f} kWh')
+print(f'Sum of energy from consumption is {np.sum(consumption): .3f} kWh')
+print(f'Sum of energy from diesel is {np.sum(diesel_kwh): .3f} kWh, which is '
+      f'{(np.sum(diesel_kwh)/np.sum(consumption))*100: .2f}% of consumption.')
 print('Hours generator is on:', on)
 if gen_mode:
-    print(f'This means that the generator emits {emi_sum: .3f} tons of CO2')
+    print(f'This means that the generator emits {np.sum(emission)/1000: .3f} tons of CO2')
 
 # Shows an average through the plot. Window is chosen as how many hours are made into one
 timestep = 1000
@@ -142,7 +123,6 @@ other_average = average_plot(X, max_output, timestep)
 if gen_mode:
     gen_ave = average_plot(X, diesel_kwh, timestep)
 need_ave = average_plot(X, needed, timestep)
-#c_list_average = average_plot(X, power_output, timestep)
 
 plt.xlabel('Year')
 plt.ylabel('kW')
@@ -154,9 +134,8 @@ if gen_mode:
     plt.plot(idx, gen_ave, 'r', label='Generator')
 plt.plot(idx, other_average, 'm', label='Max Output')
 plt.plot(idx, need_ave, label='Needed')
-#plt.plot(idx, c_list_average, 'g', label='C_list')
 plt.legend(loc='upper left')
-plt.title("0,1")
+plt.title(f'Scenario with {n_turbines[0]} turbine(s) and battery capacity of {bat_packs[0]*60} kWh')
 plt.show()
 
 print('Program ended.')

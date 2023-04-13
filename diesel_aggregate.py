@@ -20,15 +20,18 @@ import numpy as np
 # -------------------------------------------------------------------
 
 
-def gen_drain(needed, consumption, output, battery, max_charge, capacity, change, gen):
+def gen_drain(needed, battery, max_charge, capacity, change, gen):
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
-    battery_old = battery
+    if abs(change) < abs(max_charge):
+        remain = abs(max_charge) - abs(change)
+        battery, lower, needed, change = bat_test(battery, remain, capacity, needed)
     if gen_eff > needed:
-        kwh = needed + max(battery - battery_old, 0)
+        kwh = needed
+        needed = 0
     elif gen_eff <= needed:
-        missing = needed - gen_eff
         kwh = gen_eff
-    missing = max(consumption - output - change - kwh, 0)
+        needed = needed - gen_eff
+    missing = max(needed, 0)
     return kwh, battery, missing, change
 
 

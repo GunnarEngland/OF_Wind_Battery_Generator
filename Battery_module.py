@@ -37,21 +37,16 @@ def battery_deplete(battery, depletion, lower_capacity, upper_capacity):
     return battery, lower, ba_neg
 
 
-def bat_test(prev_battery, wind_output, consumption, max_charge, capacity, needed):
+def bat_test(prev_battery, max_charge, capacity, needed):
     lower = False
     new_battery = prev_battery - max(min(needed, max_charge), -max_charge)
-    if needed > max_charge:
-        needed = needed - max_charge
     if new_battery > 0.8 * capacity:
         new_battery = 0.8 * capacity
-        needed = consumption - wind_output + prev_battery - new_battery
     elif new_battery < 0.2 * capacity:
-        needed = needed - 0.2 * capacity + new_battery
         new_battery = 0.2 * capacity
         lower = True
+    delta_battery = prev_battery - new_battery  # Positive if drained
+    needed = needed - max(delta_battery, 0)
     if needed > 0:
         lower = True
-    delta_battery = new_battery - prev_battery
-    needed = consumption - wind_output - max(delta_battery, 0)
     return new_battery, lower, needed, delta_battery
-
