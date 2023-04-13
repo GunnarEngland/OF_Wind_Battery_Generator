@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 def turbineinfo(name):
     turbines = pd.read_csv('wind_turbine.csv')
     select_turbine = turbines.loc[turbines['name'] == name]
-    # if not select_turbine.has_power_curve:
-    # raise Exception('Turbine does not have a power curve.')
+    # if select_turbine.has_power_curve == 'False':
+    #    raise Exception('Turbine does not have a power curve.')
     print('Returned values for ' + str(name) + ' turbine')
     return select_turbine, turbines
 

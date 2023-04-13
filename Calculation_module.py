@@ -24,11 +24,12 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
         generator_mode = False
         needed[x] = consumption[x] - power_output[x]
         battery_old = battery
-        battery, min_charge, missing, change = bat_test(battery, max_charge, battery_capacity, needed[x])
-        needed[x] = missing
+        battery, min_charge, needed[x], change = bat_test(battery, max_charge, battery_capacity, needed[x])
         if min_charge:
             generator_mode = True
-
+        if needed[x] > 0 and power_output[x] < consumption[x]:  # check if there is not enough wind power and battery is not charged enough
+            if battery < 0.8 * battery_capacity:  # check if battery is not almost fully charged
+                generator_mode = True
         if generator_mode:  # Checks if generator is on
             diesel_kwh[x], battery, needed[x], change = gen_drain(needed[x], battery, max_charge, battery_capacity,
                                                                   change, gen)
@@ -124,9 +125,11 @@ def gen_solo(consumption, X, gen):
     diesel_kwh = [0] * len(X)
     needed = [0] * len(X)
     emission = [0] * len(X)
+    wasted = [0] * len(X)
     gen_eff = 0.3 * gen  # Can contemplate implementing an efficiency curve based on operative power
     on = 0
     f = efficiency_curve()
+    not_enough = 0
     for x in X:
         power_output[x] = consumption[x]
         diesel_kwh[x] = consumption[x]
@@ -134,6 +137,7 @@ def gen_solo(consumption, X, gen):
             needed[x] = gen_eff - power_output[x]
             power_output[x] = gen_eff
             diesel_kwh[x] = gen_eff
+            not_enough += 1
         on += 1
         emission[x] = co2_emission(f, power_output[x], diesel_per_kWh=0.25)
-    return power_output, needed, diesel_kwh, on, emission
+    return power_output, needed, diesel_kwh, on, emission, not_enough, wasted

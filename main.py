@@ -21,6 +21,12 @@ bat_mode = True
 gen_mode = True
 mcr = False
 # Read wind data and consumption data from csv
+read_consumption = pd.read_csv('con_full.csv')
+consumption = read_consumption['0'].values.tolist()
+X = np.arange(0, len(consumption), 1)
+idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
+read_consumption = read_consumption.set_index([idx])
+
 if wind_mode:
     temp_wind = pd.read_csv('FullWind.csv')
     if mcr:
@@ -28,28 +34,21 @@ if wind_mode:
     else:
         wind = non_random(temp_wind)
 
-read_consumption = pd.read_csv('con_full.csv')
-consumption = read_consumption['0'].values.tolist()
-X = np.arange(0, len(consumption), 1)
-idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
-read_consumption = read_consumption.set_index([idx])
-
-
 #  Choose number of turbines
 #n_turbines = [1, 2, 3]
-n_turbines = [2]
+n_turbines = [1]
 if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
 #bat_packs = [10, 15, 20, 25]
-bat_packs = [10]
+bat_packs = [50]
 if not bat_mode:
     bat_packs = [0]
 total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
 if wind_mode:
-    name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x
+    name = 'GE 2.5-120'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
     turbine, turbines = turbineinfo(name)
 
 # String splitting
@@ -93,7 +92,7 @@ for i in range(len(n_turbines)):
         if wind_mode is True and bat_mode is True and gen_mode is False:
             max_output, needed, b_list = wind_bat(power_output, consumption, X)
         if wind_mode is False and bat_mode is False and gen_mode is True:
-            max_output, needed, diesel_kwh, on, emission = gen_solo(consumption, X, gen)
+            max_output, needed, diesel_kwh, on, emission, not_enough, wasted = gen_solo(consumption, X, gen)
         df_generator[f'{i},{j}'] = diesel_kwh
         df_max[f'{i},{j}'] = max_output
         print(f'Calculated scenario: {i},{j}')
@@ -102,10 +101,11 @@ for i in range(len(n_turbines)):
 print(total_gen)
 #bar_plot(total_gen, "Summed kWh produced by generator", "Generator produced kWh by scenario")
 #basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
-print(f'The wind turbines produces {np.sum(power_output): .3f} kWh.')
+if wind_mode:
+    print(f'The wind turbines produces {np.sum(power_output): .3f} kWh.')
 print(f"The maximum energy produced adds up to {np.sum(max_output): .3f} kWh.")
 print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
-print(f'The energy needed sums up to {np.sum(needed)} kWh')
+print(f'The energy needed sums up to {abs(np.sum(needed))} kWh')
 print(f'The amount wasted is {np.sum(wasted): .3f} kWh, and max in an hour is {np.max(wasted): .3f} kWh')
 print(f'Sum of energy from consumption is {np.sum(consumption): .3f} kWh')
 print(f'Sum of energy from diesel is {np.sum(diesel_kwh): .3f} kWh, which is '
@@ -135,7 +135,10 @@ if gen_mode:
 plt.plot(idx, other_average, 'm', label='Max Output')
 plt.plot(idx, need_ave, label='Needed')
 plt.legend(loc='upper left')
-plt.title(f'Scenario with {n_turbines[0]} turbine(s) and battery capacity of {bat_packs[0]*60} kWh')
+if wind_mode:
+    plt.title(f'Scenario with {n_turbines[0]} {name} turbine(s) and battery capacity of {bat_packs[0]*60} kWh')
+else:
+    plt.title('Base case with only generator')
 plt.show()
 
 print('Program ended.')
