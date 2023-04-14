@@ -46,7 +46,7 @@ def bat_test(prev_battery, max_charge, capacity, needed):
         new_battery = 0.2 * capacity
         lower = True
     delta_battery = prev_battery - new_battery  # Positive if drained
-    needed = needed - max(delta_battery, 0)
+    needed = needed - delta_battery
     if needed > 0:
         lower = True
     return new_battery, lower, needed, delta_battery

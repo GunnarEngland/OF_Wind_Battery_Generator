@@ -22,19 +22,19 @@ import numpy as np
 
 def gen_drain(needed, battery, max_charge, capacity, change, gen):
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
-    if abs(change) < abs(max_charge):
-        remain = abs(max_charge) - abs(change)
-        battery, lower, needed, change = bat_test(battery, remain, capacity, needed)
-    if gen_eff > needed:
-        kwh = needed
-        needed = 0
-    elif gen_eff <= needed:
-        kwh = gen_eff
-        needed = needed - gen_eff
-    missing = max(needed, 0)
-    if kwh < 0:
-        kwh = 0
-    return kwh, battery, missing, change
+    kwh = 0
+    if needed > 0:
+        if gen_eff > needed:
+            kwh = needed
+            remain = gen_eff - needed
+            if change == 0.0:
+                battery, lower, needed, change = bat_test(battery, max_charge, capacity, remain)
+                kwh = kwh + change
+            needed = 0
+        elif gen_eff <= needed:
+            kwh = gen_eff
+            needed = needed - gen_eff
+    return kwh, battery, needed, change
 
 
 def gen_mode(battery, max_capacity, operative):

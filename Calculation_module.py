@@ -7,8 +7,8 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     # Battery module
     pack = 60.00  # One module of battery in kWh
     battery_capacity = n_batteries * pack  # Max capacity for batteries
-    lower_capacity = 0.1 * battery_capacity
-    max_charge = 0.1*pack * n_batteries  # How much a battery can charge in an hour
+    lower_capacity = 0.2 * battery_capacity
+    max_charge = 0.2*pack * n_batteries  # How much a battery can charge in an hour
     max_output = power_output.copy()
     needed = [0] * len(X)
     diesel_kwh = [0] * len(X)
@@ -20,10 +20,11 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     f = efficiency_curve()
     not_enough = 0
     wasted = [0] * len(X)
+    generator_mode = False
     for x in X:
-        if battery > 0.5 * battery_capacity and operative > 3:
+        if battery > 0.5 * battery_capacity or operative > 3:
             generator_mode = False
-        needed[x] = consumption[x] - power_output[x]
+        needed[x] = consumption[x] - power_output[x]  # needed > 0 means energy deficit
         battery_old = battery
         battery, min_charge, needed[x], change = bat_test(battery, max_charge, battery_capacity, needed[x])
         if min_charge:
@@ -36,12 +37,13 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
                                                                   change, gen)
             operative += 1
             on += 1
-        depleted = max(battery_old - battery, 0)
+        depleted = battery_old - battery
         if needed[x] > 0:
             not_enough += 1
         elif needed[x] < 0:
-            wasted[x] = -needed[x]
+        #    wasted[x] = -needed[x]
             needed[x] = 0
+        wasted[x] = power_output[x] + diesel_kwh[x] - consumption[x]
         max_output[x] = power_output[x] + depleted + diesel_kwh[x]
         b_list.append(battery)
         emission[x] = co2_emission(f, diesel_kwh[x], 0.25)

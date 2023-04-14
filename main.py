@@ -21,18 +21,24 @@ bat_mode = True
 gen_mode = True
 mcr = False
 # Read wind data and consumption data from csv
-read_consumption = pd.read_csv('con_full.csv')
-consumption = read_consumption['0'].values.tolist()
+#read_consumption = pd.read_csv('con_full.csv')
+#consumption = read_consumption['0'].values.tolist()
+#X = np.arange(0, len(consumption), 1)
+#idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
+#read_consumption = read_consumption.set_index([idx])
+
+# Test numbers to figure out summation.
+consumption = [700, 700, 1000, 1000, 1000, 1000, 150, 150, 150, 1200, 1200, 1200, 800, 800]
+wind_list = [10, 20, 20, 15, 20, 1, 15, 20, 15, 10, 7, 7, 20, 20]
 X = np.arange(0, len(consumption), 1)
 idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
-read_consumption = read_consumption.set_index([idx])
-
-if wind_mode:
-    temp_wind = pd.read_csv('FullWind.csv')
-    if mcr:
-        wind = monte_carlo_simulation(temp_wind)
-    else:
-        wind = non_random(temp_wind)
+wind = pd.DataFrame(wind_list)
+#if wind_mode:
+#    temp_wind = pd.read_csv('FullWind.csv')
+#    if mcr:
+#        wind = monte_carlo_simulation(temp_wind)
+#    else:
+#        wind = non_random(temp_wind)
 
 #  Choose number of turbines
 #n_turbines = [1, 2, 3]
@@ -116,11 +122,11 @@ if gen_mode:
     print(f'This means that the generator emits {np.sum(emission)/1000: .3f} tons of CO2')
 
 # Shows an average through the plot. Window is chosen as how many hours are made into one
-timestep = 1000
+timestep = 1
 ave_con = average_plot(X, consumption, timestep)
 if bat_mode:
     chosen_average = average_plot(X, b_list, timestep)
-other_average = average_plot(X, max_output, timestep)
+other_average = average_plot(X, power_output, timestep)
 if gen_mode:
     gen_ave = average_plot(X, diesel_kwh, timestep)
 need_ave = average_plot(X, needed, timestep)
@@ -133,7 +139,7 @@ if bat_mode:
     plt.plot(idx, chosen_average, 'g', label='Battery')
 if gen_mode:
     plt.plot(idx, gen_ave, 'r', label='Generator')
-plt.plot(idx, other_average, 'm', label='Max Output')
+plt.plot(idx, other_average, 'm', label='Wind Output')
 plt.plot(idx, need_ave, label='Needed')
 plt.legend(loc='upper left')
 if wind_mode:
