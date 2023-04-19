@@ -1,5 +1,5 @@
 #  Should have three different if not more def() that depend on inputs
-from Battery_module import battery_charge, battery_deplete, bat_test
+from Battery_module import battery_charge, battery_deplete, bat
 from diesel_aggregate import gen_drain, efficiency_curve, co2_emission
 
 
@@ -8,7 +8,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     pack = 60.00  # One module of battery in kWh
     battery_capacity = n_batteries * pack  # Max capacity for batteries
     lower_capacity = 0.2 * battery_capacity
-    max_charge = 0.2*pack * n_batteries  # How much a battery can charge in an hour
+    max_charge = 0.25*pack * n_batteries  # How much a battery can charge in an hour
     max_output = power_output.copy()
     needed = [0] * len(X)
     diesel_kwh = [0] * len(X)
@@ -26,7 +26,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
             generator_mode = False
         needed[x] = consumption[x] - power_output[x]  # needed > 0 means energy deficit
         battery_old = battery
-        battery, min_charge, needed[x], change = bat_test(battery, max_charge, battery_capacity, needed[x])
+        battery, min_charge, needed[x], change = bat(battery, max_charge, battery_capacity, needed[x])
         if min_charge:
             generator_mode = True
         if needed[x] > 0 and power_output[x] < consumption[x]:  # check if there is not enough wind power and battery is not charged enough

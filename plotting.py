@@ -57,11 +57,13 @@ def basic_plot(df, k, l, name, y_label, c_name):
     return
 
 
-def bar_plot(data, ylabel, title):
+def bar_plot(data, ylabel, title, save):
     x_value = np.arange(0, len(data), 1)
     plt.bar(x_value, data)
     plt.xlabel("Scenario")
     plt.ylabel(ylabel)
     plt.title(title)
+    if save:
+        plt.savefig(f"{title}.png")
     plt.show()
     return
