@@ -12,7 +12,8 @@ from Battery_module import battery_charge, battery_deplete
 from diesel_aggregate import gen_drain, co2_emission, efficiency_curve
 from monte_carlo import monte_carlo_simulation, non_random
 from Consumption_length import consumption_length, list_consumption
-from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot
+from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot, wind_plot, sorted_bar_plot, \
+    plot_wind_and_power_freq, wind_speed_histogram, power_output_histogram
 import sys
 
 # Chose what is active, wind, battery and generator
@@ -33,6 +34,7 @@ read_consumption = read_consumption.set_index([idx])
 #X = np.arange(0, len(consumption), 1)
 #idx = pd.date_range('2023-01-01 00:00', periods=len(consumption), freq='H')
 #wind = pd.DataFrame(wind_list)
+
 if wind_mode:
     temp_wind = pd.read_csv('FullWind.csv')
     if mcr:
@@ -41,14 +43,14 @@ if wind_mode:
         wind = non_random(temp_wind)
 
 #  Choose number of turbines
-n_turbines = [1, 2, 3]
-#n_turbines = [1]
+#n_turbines = [1, 2, 3]
+n_turbines = [2]
 if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
 #bat_packs = [10, 15, 20, 25]
-bat_packs = [20, 30, 40, 50]
-#bat_packs = [20]
+#bat_packs = [20, 30, 40, 50]
+bat_packs = [20]
 if not bat_mode:
     bat_packs = [0]
 total_gen = []
@@ -77,6 +79,7 @@ wastedlist = []
 maxlist = []
 onlist = []
 emissionlist = []
+#for i in
 for i in range(len(n_turbines)):
 
     if n_turbines[i] > 1:
@@ -87,7 +90,19 @@ for i in range(len(n_turbines)):
 
         # Going from wind data to power output, through the use of the power curve
         power_output = wind_module(c_wind, x_value, f)
-
+        #wind[c_name].value_counts(sort=False).plot.bar()
+        #plt.figure()
+        #ax = wind.plot.kde()
+        #ax = wind[c_name].value_counts(sort=True).plot.bar()
+        windlist = c_wind.tolist()
+        #sorted_bar_plot(windlist, True, c_name)
+        #plot_wind_and_power_freq(windlist, power_output)
+        #plt.show()
+        # Example usage
+        wind_speed_histogram(windlist)
+        power_output_histogram(power_output)
+        plt.show()
+        #plt.show()
     for j in range(len(bat_packs)):
         gen = 4000
         diesel_kwh = [0] * len(X)
@@ -116,10 +131,10 @@ for i in range(len(n_turbines)):
 
 print(total_gen)
 time_plot = False
-last_scenario = False
+scenario_text = False
 #bar_plot(total_gen, "Summed kWh produced by generator", "Generator produced kWh by scenario", False)
 #basic_plot(df_max, len(n_turbines), len(bat_packs), 'Generator comparison', "kWh", "time")
-if last_scenario:
+if scenario_text:
     if wind_mode:
         print(f'The wind turbines produces {np.sum(power_output): .3f} kWh.')
     print(f"The maximum energy produced adds up to {np.sum(max_output): .3f} kWh.")
