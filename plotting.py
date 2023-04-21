@@ -27,9 +27,9 @@ def consumption_plot(df):
     return
 
 
-def wind_plot(y_wind):
-    idx = pd.date_range('1996-01-01 00:00', periods=len(y_wind), freq='H')
-    plt.plot(idx, y_wind)
+def wind_plot(x_wind, y_wind):
+    #idx = pd.date_range('1996-01-01 00:00', periods=len(y_wind), freq='H')
+    plt.plot(x_wind, y_wind)
     plt.title('Wind speeds 1996-2015')
     plt.xlabel('Time (h)')
     plt.ylabel('Wind Speed (m/s)')
@@ -143,7 +143,7 @@ def power_output_histogram(power_output, bin_width=50):
     plt.bar(bins[:-1], freq, width=bin_width, align="edge", edgecolor="black")
     plt.xlabel("Power output (kW)")
     plt.ylabel("Frequency")
-    plt.title("Power output distribution for 2 S2x")
-    #plt.savefig('Power output distribution.png')
+    plt.title("Power output distribution for SWT-2.3-113")
+    #plt.savefig('Power output distributionSWT.png')
 
 

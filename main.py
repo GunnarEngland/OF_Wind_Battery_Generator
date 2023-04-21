@@ -14,6 +14,7 @@ from monte_carlo import monte_carlo_simulation, non_random
 from Consumption_length import consumption_length, list_consumption
 from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot, wind_plot, sorted_bar_plot, \
     plot_wind_and_power_freq, wind_speed_histogram, power_output_histogram
+from analysis import calculate_monthly_averages
 import sys
 
 # Chose what is active, wind, battery and generator
@@ -42,9 +43,11 @@ if wind_mode:
     else:
         wind = non_random(temp_wind)
 
+wind_idx = pd.date_range('1996-01-01 00:00', periods=len(wind), freq='H')
+wind = wind.set_index([wind_idx])
 #  Choose number of turbines
 #n_turbines = [1, 2, 3]
-n_turbines = [2]
+n_turbines = [1]
 if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
@@ -57,7 +60,7 @@ total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
 if wind_mode:
-    name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
+    name = 'SWT-2.3-113'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
     turbine, turbines = turbineinfo(name)
 
 # String splitting
@@ -79,6 +82,34 @@ wastedlist = []
 maxlist = []
 onlist = []
 emissionlist = []
+
+monthly_average = wind[c_name].resample('M').mean()
+least_windy_month = monthly_average.sort_values().index[0].strftime('%B %Y')
+month, year = least_windy_month.split()
+data_of_month = wind[c_name][(wind[c_name].index.month == pd.to_datetime(month, format='%B').month) & (wind[c_name].index.year == int(year))]
+# Resample the data at a weekly frequency, using the mean of the values in each week
+data_of_week = data_of_month.resample('W').mean()
+
+# Find the week with the lowest mean wind speed
+min_week = data_of_week.idxmin()
+
+# Extract the data for that week
+data_of_min_week = data_of_month[(data_of_month.index.isocalendar().week == min_week.week)]
+# Set the figure size
+plt.figure(figsize=(10, 6))
+
+# plot the data
+fig, ax = plt.subplots()
+data_of_min_week.plot.bar(ax=ax)
+
+ax.set_xticks(range(0, len(data_of_min_week), 24))
+ax.set_xticklabels(data_of_min_week.index[::24].strftime('%d'))
+plt.xticks(rotation=45)
+plt.ylabel("Wind speed")
+plt.title("Lowest wind speed week. May 2010")
+plt.show()
+
+#for i in range(len)
 #for i in
 for i in range(len(n_turbines)):
 
@@ -90,6 +121,8 @@ for i in range(len(n_turbines)):
 
         # Going from wind data to power output, through the use of the power curve
         power_output = wind_module(c_wind, x_value, f)
+        week_output = wind_module(data_of_min_week, x_value, f)
+        print(np.sum(week_output))
         #wind[c_name].value_counts(sort=False).plot.bar()
         #plt.figure()
         #ax = wind.plot.kde()
@@ -99,9 +132,9 @@ for i in range(len(n_turbines)):
         #plot_wind_and_power_freq(windlist, power_output)
         #plt.show()
         # Example usage
-        wind_speed_histogram(windlist)
-        power_output_histogram(power_output)
-        plt.show()
+        #wind_speed_histogram(windlist)
+        #power_output_histogram(power_output)
+        #plt.show()
         #plt.show()
     for j in range(len(bat_packs)):
         gen = 4000
