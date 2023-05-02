@@ -7,14 +7,13 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     # Battery module
     pack = 60.00  # One module of battery in kWh
     battery_capacity = n_batteries * pack  # Max capacity for batteries
-    lower_capacity = 0.2 * battery_capacity
+    battery = 0.2 * battery_capacity
     max_charge = 0.25*pack * n_batteries  # How much a battery can charge in an hour
     max_output = power_output.copy()
     needed = [0] * len(X)
     diesel_kwh = [0] * len(X)
     emission = [0] * len(X)
     b_list = []  # Initiate list used for the battery values.
-    battery = lower_capacity
     operative = 0
     on = 0
     f = efficiency_curve()

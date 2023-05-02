@@ -27,7 +27,7 @@ def gen_drain(needed, battery, max_charge, capacity, change, gen):
         if gen_eff > needed:
             kwh = needed
             remain = gen_eff - needed
-            if change == 0.0:
+            if change == 0:  # Does not go through
                 battery, lower, needed, change = bat(battery, max_charge, capacity, remain)
                 kwh = kwh + change
             needed = 0
