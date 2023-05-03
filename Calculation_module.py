@@ -26,13 +26,14 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
         needed[x] = consumption[x] - power_output[x]  # needed > 0 means energy deficit
         battery_old = battery
         battery, min_charge, needed[x], change = bat(battery, max_charge, battery_capacity, needed[x])
+        new_charge = min(max_charge, max_charge - change)
         if min_charge:
             generator_mode = True
         if needed[x] > 0 and power_output[x] < consumption[x]:  # check if there is not enough wind power and battery is not charged enough
             if battery < 0.8 * battery_capacity:  # check if battery is not almost fully charged
                 generator_mode = True
         if generator_mode:  # Checks if generator is on
-            diesel_kwh[x], battery, needed[x], change = gen_drain(needed[x], battery, max_charge, battery_capacity,
+            diesel_kwh[x], battery, needed[x], change = gen_drain(needed[x], battery, new_charge, battery_capacity,
                                                                   change, gen)
             operative += 1
             on += 1

@@ -62,7 +62,7 @@ total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
 if wind_mode:
-    name = 'SWT-2.3-113'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
+    name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
     turbine, turbines = turbineinfo(name)
 
 # String splitting
@@ -71,14 +71,13 @@ if wind_mode:
     hub_height = string_to_float(turbine.hub_height)
 
     #  Wind height
-    h = hub_height[-1]
-    h = 50  # Set desirable wind height
+    h = hub_height[-1]  # Set desirable wind height
     c_wind, c_same = c_height(wind, h)  # Calls wind_height module
     c_name = 'Wind Speed ' + str(h)  # Sets name of column
     if not c_same:
         wind[c_name] = np.array(c_wind)  # Adds new wind speed into dataframe with column-name c_name
 
-wind_speed_histogram(wind[c_name], 1, h)
+#wind_speed_histogram(wind[c_name], 1, h)
 df_generator = pd.DataFrame()
 df_generator['time'] = idx
 df_max = pd.DataFrame()
@@ -157,9 +156,9 @@ for i in range(len(n_turbines)):
         generatorlist.append(np.sum(diesel_kwh))
         print(f'Calculated scenario: {i},{j}')
         #total_gen.append(np.sum(df_generator[f'{i},{j}']))
-diesel = [i for i in diesel_kwh if i != 0]
-dieseldf = pd.DataFrame(data=diesel)
-confreq(dieseldf)
+#diesel = [i for i in diesel_kwh if i != 0]
+#dieseldf = pd.DataFrame(data=diesel)
+#confreq(dieseldf)
 time_plot = False
 scenario_text = True
 multiple_text = False
