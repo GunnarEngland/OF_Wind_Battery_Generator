@@ -21,19 +21,24 @@ import numpy as np
 
 
 def gen_drain(needed, battery, max_charge, capacity, change, gen):
+    allow_charge = False
     gen_eff = 0.3*gen  # 1200 (30% of 4000)
     kwh = 0
     if needed > 0:
         if gen_eff > needed:
             kwh = needed
             remain = gen_eff - needed
-            #if change == 0:  # Does not go through
-            battery, lower, needed, change = bat(battery, max_charge, capacity, remain)
-            kwh = kwh + change
+            if allow_charge:
+                battery, lower, needed, change = bat(battery, max_charge, capacity, remain)
+                kwh = kwh + change
             needed = 0
         elif gen_eff <= needed:
             kwh = gen_eff
             needed = needed - gen_eff
+    else:
+        if allow_charge:
+            battery, lower, needed, change = bat(battery, max_charge, capacity, gen_eff)
+            kwh = change
     return kwh, battery, needed, change
 
 

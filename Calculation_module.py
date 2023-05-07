@@ -1,4 +1,3 @@
-#  Should have three different if not more def() that depend on inputs
 from Battery_module import battery_charge, battery_deplete, bat
 from diesel_aggregate import gen_drain, efficiency_curve, co2_emission
 
@@ -18,15 +17,23 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     on = 0
     f = efficiency_curve()
     not_enough = 0
+    where = []
+    powbat = []
     wasted = [0] * len(X)
     generator_mode = False
     for x in X:
         if battery > 0.5 * battery_capacity or operative > 3:
             generator_mode = False
         needed[x] = consumption[x] - power_output[x]  # needed > 0 means energy deficit
+        if power_output[x] > consumption[x]:
+            chargeable = min(power_output[x] - consumption[x], max_charge)
+            powbat.append(chargeable)
         battery_old = battery
         battery, min_charge, needed[x], change = bat(battery, max_charge, battery_capacity, needed[x])
-        new_charge = min(max_charge, max_charge - change)
+        new_charge = min(max_charge, max_charge - abs(change))
+        #if battery > battery_old:
+        #    chargedbywind = battery - battery_old
+        #    powbat.append(chargedbywind)
         if min_charge:
             generator_mode = True
         if needed[x] > 0 and power_output[x] < consumption[x]:  # check if there is not enough wind power and battery is not charged enough
@@ -40,14 +47,14 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
         depleted = battery_old - battery
         if needed[x] > 0:
             not_enough += 1
+            where.append(x)
         elif needed[x] < 0:
-        #    wasted[x] = -needed[x]
             needed[x] = 0
         wasted[x] = power_output[x] + diesel_kwh[x] - consumption[x]
         max_output[x] = power_output[x] + depleted + diesel_kwh[x]
         b_list.append(battery)
         emission[x] = co2_emission(f, diesel_kwh[x], 0.25)
-    return max_output, b_list, diesel_kwh, on, needed, emission, not_enough, wasted
+    return max_output, b_list, diesel_kwh, on, needed, emission, not_enough, wasted, where, powbat
 
 
 def wind_bat(power_output, consumption, X):

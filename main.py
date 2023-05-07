@@ -14,16 +14,35 @@ from monte_carlo import monte_carlo_simulation, non_random
 from Consumption_length import consumption_length, list_consumption
 from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot, wind_plot, sorted_bar_plot, \
     plot_wind_and_power_freq, wind_speed_histogram, power_output_histogram, power_coef_plot, consumption_plot, \
-    mean_std_con, mean_std_con_year, timeplot, group_plot, meanstdcon, confreq
-from analysis import calculate_monthly_averages
+    mean_std_con, mean_std_con_year, timeplot, group_plot, meanstdcon, confreq, emission_plot, diesel_plot, \
+    seasonal_prod
+from analysis import calculate_monthly_averages, diesel_calc, seasonal
 import sys
-
 # Chose what is active, wind, battery and generator
-wind_mode = True
-bat_mode = True
-gen_mode = True
+wind_mode = True  # Include wind calculation
+bat_mode = True  # Include battery (could also be set to 0 for packs)
+gen_mode = True  # With or without generator
 mcr = False
 monthly = False
+thirdheight = False
+scenario_text = True
+multiple_text = False
+compare_plot = False
+time_plot = False
+#  Choose number of turbines
+#n_turbines = [1, 2, 3]
+n_turbines = [1]
+if not wind_mode:
+    n_turbines = [0]
+#  Choose number of battery packs
+#bat_packs = [0, 20, 30, 40]
+bat_packs = [20]
+if not bat_mode:
+    bat_packs = [00]
+#  Choose which turbine will be used
+name = 'SWT-2.3-113'  # S2x, SWT-2.3-113
+
+
 # Read wind data and consumption data from csv
 read_consumption = pd.read_csv('con_full.csv')
 consumption = read_consumption['0'].values.tolist()
@@ -43,26 +62,15 @@ if wind_mode:
         wind = monte_carlo_simulation(temp_wind)
     else:
         wind = non_random(temp_wind)
-wind_idx = pd.date_range('1996-01-01 00:00', periods=len(wind), freq='H')
-wind = wind.set_index([wind_idx])
+    wind_idx = pd.date_range('1996-01-01 00:00', periods=len(wind), freq='H')
+    wind = wind.set_index([wind_idx])
 #confreq(read_consumption)
 
-#  Choose number of turbines
-#n_turbines = [1, 2, 3]
-n_turbines = [1]
-if not wind_mode:
-    n_turbines = [0]
-#  Choose number of battery packs
-#bat_packs = [10, 15, 20, 25]
-#bat_packs = [0, 20, 30, 40]
-bat_packs = [20]
-if not bat_mode:
-    bat_packs = [00]
+
 total_gen = []
 # Select turbine
 # https://openenergy-platform.org/dataedit/view/supply/wind_turbine_library
 if wind_mode:
-    name = 'S2x'  # GE 2.5-120, E-53/800(not offshore), V100/1800, S2x (O H), SWT-2.3-113 (L V)
     turbine, turbines = turbineinfo(name)
 
 # String splitting
@@ -76,8 +84,12 @@ if wind_mode:
     c_name = 'Wind Speed ' + str(h)  # Sets name of column
     if not c_same:
         wind[c_name] = np.array(c_wind)  # Adds new wind speed into dataframe with column-name c_name
+    if thirdheight:
+        t = 50
+        b_name = 'Wind Speed ' + str(t)
+        b_wind, b_same = c_height(wind, t)
+        wind[b_name] = np.array(b_wind)
 
-#wind_speed_histogram(wind[c_name], 1, h)
 df_generator = pd.DataFrame()
 df_generator['time'] = idx
 df_max = pd.DataFrame()
@@ -88,18 +100,18 @@ onlist = []
 emissionlist = []
 generatorlist = []
 
-#yearly_average = wind[c_name].resample('Y').mean()
-#group_plot(read_consumption)
+#mean = seasonal(wind)
 
-#meanstdcon(wind['Wind Speed 101'])
 
 if monthly:
     monthly_average = wind[c_name].resample('M').mean()
-    least_windy_month = monthly_average.sort_values().index[0].strftime('%B %Y')
+    least_windy_month = monthly_average.sort_values().index[-1].strftime('%B %Y')
+    print(least_windy_month)
     month, year = least_windy_month.split()
     data_of_month = wind[c_name][(wind[c_name].index.month == pd.to_datetime(month, format='%B').month) & (wind[c_name].index.year == int(year))]
     monthly_average_con = read_consumption['0'].resample('M').mean()
     highest_consumption_month = monthly_average_con.sort_values().index[0].strftime('%B %Y')
+    print(highest_consumption_month)
     month, year = highest_consumption_month.split()
     data_of_month_con = read_consumption['0'][(read_consumption['0'].index.month == pd.to_datetime(month, format='%B').month) & (read_consumption['0'].index.year == int(year))]
     c_wind = data_of_month[:len(data_of_month_con)]
@@ -107,16 +119,6 @@ if monthly:
 
     X = np.arange(0, len(consumption), 1)
     idx = pd.date_range('2024-01-01 00:00', periods=len(consumption), freq='H')
-
-
-# Resample the data at a weekly frequency, using the mean of the values in each week
-#data_of_week = data_of_month.resample('W').mean()
-
-# Find the week with the lowest mean wind speed
-#min_week = data_of_week.idxmin()
-
-# Extract the data for that week
-#data_of_min_week = data_of_month[(data_of_month.index.isocalendar().week == min_week.week)]
 
 
 for i in range(len(n_turbines)):
@@ -130,16 +132,17 @@ for i in range(len(n_turbines)):
         # Going from wind data to power output, through the use of the power curve
         power_output = wind_module(c_wind, x_value, f)
         #power_output_histogram(power_output)
+        #a_power = wind_module(mean['Wind Speed 101'], x_value, f)
+        #b_power = wind_module(mean['Wind Speed 99.5'], x_value, f)
+        #c_power = wind_module(mean['Wind Speed 50'], x_value, f)
     for j in range(len(bat_packs)):
         gen = 4000
         diesel_kwh = [0] * len(X)
         on = 0
         b_list = [0] * len(X)
 
-# Combo True False True does not exist - value?
-
         if wind_mode and bat_mode and gen_mode:
-            max_output, b_list, diesel_kwh, on, needed, emission, not_enough, wasted = \
+            max_output, b_list, diesel_kwh, on, needed, emission, not_enough, wasted, where, powbat = \
                 wind_bat_gen(power_output, consumption, X, gen, bat_packs[j])
         if wind_mode is False and bat_mode and gen_mode:  # Currently not working, gen negative
             max_output, needed, diesel_kwh, b_list, on, emission = bat_gen(consumption, X, gen)
@@ -147,22 +150,32 @@ for i in range(len(n_turbines)):
             max_output, needed, b_list = wind_bat(power_output, consumption, X)
         if wind_mode is False and bat_mode is False and gen_mode is True:
             max_output, needed, diesel_kwh, on, emission, not_enough, wasted = gen_solo(consumption, X, gen)
-        #df_generator[f'{i},{j}'] = diesel_kwh
-        #df_max[f'{i},{j}'] = max_output
-        wastedlist.append(np.sum(wasted))
-        maxlist.append(np.sum(max_output))
-        onlist.append(on)
-        emissionlist.append(np.sum(emission))
-        generatorlist.append(np.sum(diesel_kwh))
-        print(f'Calculated scenario: {i},{j}')
+        if multiple_text:
+            wastedlist.append(np.sum(wasted) - (b_list[-1]-b_list[0]))
+            maxlist.append(np.sum(max_output))
+            onlist.append(on)
+            emissionlist.append(np.sum(emission))
+            generatorlist.append(np.sum(diesel_kwh))
+        if wind_mode:
+            print(f'Calculated scenario: {n_turbines[i]}{name}/{bat_packs[j]*60}')
         #total_gen.append(np.sum(df_generator[f'{i},{j}']))
-#diesel = [i for i in diesel_kwh if i != 0]
-#dieseldf = pd.DataFrame(data=diesel)
-#confreq(dieseldf)
-time_plot = False
-scenario_text = True
-multiple_text = False
-compare_plot = False
+
+#seasonal_prod(a_power, b_power, c_power)
+temp = 0
+prod = 0
+for x in X:
+    temp += min(power_output[x], consumption[x])
+    prod += power_output[x]
+SCR = temp/prod
+print(f'The SCR is {SCR}')
+
+LOLP = 0
+for x in X:
+    if power_output[x] < consumption[x]:
+        LOLP += 1
+print(f'LOLP is {LOLP/len(consumption)}')
+
+
 if compare_plot:
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(power_output, label='Power output')
@@ -189,6 +202,8 @@ if scenario_text:
         print(f'The wind turbines produces {np.sum(power_output): .3f} kWh.')
     print(f"The maximum energy produced adds up to {np.sum(max_output): .3f} kWh.")
     print('There is a lack in energy for: %d hours, which is %3.2f percent.' % (not_enough, not_enough/len(X)*100))
+    if wind_mode:
+        print(f'For these hours: {where}')
     print(f'The energy needed sums up to {abs(np.sum(needed))} kWh')
     print(f'The amount wasted is {np.sum(wasted): .3f} kWh, and max in an hour is {np.max(wasted): .3f} kW')
     print(f'Sum of energy from consumption is {np.sum(consumption): .3f} kWh')
@@ -200,7 +215,7 @@ if scenario_text:
 
 if time_plot:
     timeplot(X, consumption, b_list, power_output, diesel_kwh, needed, idx, wind_mode, bat_mode, gen_mode, n_turbines,
-             name, bat_packs, timestep=50)
+             name, bat_packs, timestep=500)
 
 
 print('Program ended.')

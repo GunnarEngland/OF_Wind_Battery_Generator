@@ -334,3 +334,86 @@ def confreq(df):
     plt.savefig('Figures/diefreq.png')
     # Show the plot
     plt.show()
+
+
+def emission_plot():
+    emission_list = [3262.15, 1481.32, 1402.39, 1372.12, 1346.31, 1129.6, 1040.88, 1004.48, 972.90, 953.37, 866.81,
+                     830.28, 798.05, 705.338, 623.33, 587.76, 556.25]
+    x_axis = np.arange(0, len(emission_list), 1)
+    labels = ['Base Case', '1S2x/0', '1S2x/1200', '1S2x/1800', '1S2x/2400', '2S2x/0', '2S2x/1200', '2S2x/1800',
+              '2S2x/2400', '3S2x/0', '3S2x/1200', '3S2x/1800', '3S2x/2400', 'SWT/0', 'SWT/1200', 'SWT/1800',
+              'SWT/2400']
+    twenty = 0.2 * emission_list[0]
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_xticks(x_axis)
+    ax.set_xticklabels(labels, rotation=30, ha='right')
+    ax.set_yticks(np.arange(0, 6000, 500))
+    ax.plot(x_axis, emission_list)
+    ax.set_xlabel('Scenario')
+    ax.set_ylabel('Emission (tons')
+    ax.set_title('Emission in tons by Scenario')
+    plt.grid()
+    plt.axhline(y=twenty, color='r')
+    ax.text(-0.5, twenty, "20 % of Base Case", ha="right", va="bottom", color="r")
+    plt.savefig('Figures/emissionbyscenario.png')
+    plt.show()
+    return
+
+
+def diesel_plot():
+    diesel_max = [5660.4798964351085, 4713.50694780554, 4675.992176476462, 4667.555561368581, 4658.490167969307,
+                  4039.437533301029, 3936.757760429382, 3896.400802688124, 3862.641229276157, 3571.7900832324126,
+                  3428.338119380571, 3367.385477411131, 3313.71347132398, 2740.9251045537353, 2558.2647684877616,
+                  2480.31478002967, 2419.369957417569]
+    diesel_min = [4209.572700480878, 585.7126816954881, 433.31517031304213, 375.7288587856899, 324.1675041868724,
+                  375.72850347936384, 264.96654268321333, 215.6466385588212, 178.5562902979011, 288.22919897024497,
+                  201.35712003327123, 160.75952765901687, 127.97562623081566, 228.7910215923156, 155.74142478033437,
+                  119.38850125605136, 88.16903570966946]
+    diesel_std = [280.9525639169696, 796.0624679577357, 821.0625861329654, 832.1495688208815, 841.4012484165302,
+                  686.9682429391488, 691.8546180094593, 695.0829720019101, 697.1275380646462, 617.1308707590197,
+                  612.4686513680792, 611.3673168452215, 609.8320723033764, 474.05929196276594, 461.00658511764846,
+                  457.44558669187035, 454.19275430623367]
+    diesel_mean = [5090.740814248144, 2311.667272251175, 2188.5041353251577, 2141.253372150787, 2100.9855215984003,
+                   1762.789963528148, 1624.345782218431, 1567.5357907651219, 1518.260338483044, 1487.7785237030441,
+                   1352.6936570599553, 1295.6933672394869, 1245.3999235754502, 1100.714716083865, 972.73473003891,
+                   917.2214259636569, 868.0486374357281]
+    x_axis = np.arange(0, len(diesel_max), 1)
+    labels = ['Base Case', '1S2x/0', '1S2x/1200', '1S2x/1800', '1S2x/2400', '2S2x/0', '2S2x/1200', '2S2x/1800',
+              '2S2x/2400', '3S2x/0', '3S2x/1200', '3S2x/1800', '3S2x/2400', 'SWT/0', 'SWT/1200', 'SWT/1800',
+              'SWT/2400']
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_xticks(x_axis)
+    ax.set_xticklabels(labels, rotation=30, ha='right')
+    ax.set_yticks(np.arange(0, 6000, 500))
+    ax.plot(x_axis, diesel_mean, 'o-', label='Mean')
+    ax.fill_between(x_axis, diesel_min, diesel_max, alpha=0.2, label='Range')
+    ax.set_xlabel('Scenario')
+    ax.set_ylabel('Diesel (l)')
+    ax.set_title('Diesel (l) needed in a month by Scenario')
+    plt.grid()
+    plt.legend()
+    plt.savefig('Figures/newdieselbyscenario.png')
+    plt.show()
+
+
+def seasonal_prod(a_power, b_power, c_power):
+    # create x-axis values (assuming it's a range from 0 to len(a_power))
+    x_value = range(len(a_power))
+
+    # plot three lines on the same graph
+    fig, ax = plt.subplots(figsize=(12, 6))
+    # set x-axis tick labels to show month abbreviations for every 24 values
+    ticks = np.arange(0, 288, 24)
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(months)
+    ax.plot(x_value, a_power, label='Wind Speed 101')
+    ax.plot(x_value, b_power, label='Wind Speed 99.5')
+    ax.plot(x_value, c_power, label='Wind Speed 50')
+
+    ax.set_xlabel('Time (months)')
+    ax.set_ylabel('Power Production (kW)')
+    ax.set_title('Seasonal Variation of Power Production')
+    ax.legend()
+    plt.savefig('Figures/seasonalvariationpowerproduction.png')
+    plt.show()
