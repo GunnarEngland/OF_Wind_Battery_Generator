@@ -20,6 +20,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
     where = []
     powbat = []
     wasted = [0] * len(X)
+    diesel = [0] * len(X)
     generator_mode = False
     for x in X:
         if battery > 0.5 * battery_capacity or operative > 3:
@@ -53,7 +54,7 @@ def wind_bat_gen(power_output, consumption, X, gen, n_batteries):
         wasted[x] = power_output[x] + diesel_kwh[x] - consumption[x]
         max_output[x] = power_output[x] + depleted + diesel_kwh[x]
         b_list.append(battery)
-        emission[x] = co2_emission(f, diesel_kwh[x], 0.25)
+        emission[x] = co2_emission(f, diesel_kwh[x], 10.56)
     return max_output, b_list, diesel_kwh, on, needed, emission, not_enough, wasted, where, powbat
 
 
@@ -140,6 +141,7 @@ def gen_solo(consumption, X, gen):
     on = 0
     f = efficiency_curve()
     not_enough = 0
+    pri = False
     for x in X:
         power_output[x] = consumption[x]
         diesel_kwh[x] = consumption[x]
@@ -149,5 +151,5 @@ def gen_solo(consumption, X, gen):
             diesel_kwh[x] = gen_eff
             not_enough += 1
         on += 1
-        emission[x] = co2_emission(f, power_output[x], diesel_per_kWh=0.25)
+        emission[x] = co2_emission(f, power_output[x], kwh_per_diesel=10.56)
     return power_output, needed, diesel_kwh, on, emission, not_enough, wasted

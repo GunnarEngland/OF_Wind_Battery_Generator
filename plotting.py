@@ -21,6 +21,30 @@ def power_curve_plot(x_value, y_value, f, name, save):
     return
 
 
+def power_curve_multiplot(x_values1, y_values1, f1, x_values2, y_values2, f2, save):
+    plt.xlabel('Wind speed (m/s)')
+    plt.ylabel('Power output (kW)')
+    plt.title('Power curves for turbine SWT-2.3-113 and S2x')
+
+    # Plot the first set of data
+    plt.plot(x_values1, y_values1, 'o', label='Data for SWT-2.3-113')
+    plt.plot(x_values1, f1(x_values1), '-', label='Power curve for SWT-2.3-113')
+
+    # Plot the second set of data
+    plt.plot(x_values2, y_values2, 'o', label='Data for S2x')
+    plt.plot(x_values2, f2(x_values2), '-', label='Power curve for S2x')
+
+    plt.xlim([0, 30])
+    plt.ylim([0, 2500])
+    plt.grid()
+    plt.legend()
+
+    if save:
+        plt.savefig('Figures/power_curves.png')
+
+    plt.show()
+
+
 def consumption_plot(df):
     # plot the data
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -157,6 +181,23 @@ def wind_speed_histogram(wind_speeds, bin_width, h):
     plt.show()
 
 
+def wind_speed_multihistogram(wind_speeds1, wind_speeds2, bin_width, h1, h2):
+    bins = np.arange(0, max(np.max(wind_speeds1), np.max(wind_speeds2)) + bin_width, bin_width)
+    freq1, _ = np.histogram(wind_speeds1, bins=bins)
+    freq2, _ = np.histogram(wind_speeds2, bins=bins)
+
+    plt.bar(bins[:-1], freq1, width=bin_width, align="edge", edgecolor="black", label=f'{h1} m.a.s.l.')
+    plt.bar(bins[:-1], freq2, width=bin_width, align="edge", edgecolor="black", alpha=0.5, label=f'{h2} m.a.s.l.', color='red')
+
+    plt.ylim([0, max(np.max(freq1), np.max(freq2)) + 1000])
+    plt.xlim([0, 40])
+    plt.xlabel("Wind speed (m/s)")
+    plt.ylabel("Frequency")
+    plt.title('Wind speed distribution')
+    plt.legend()
+    plt.savefig('Figures/windspeed_distribution.png')
+    plt.show()
+
 def power_output_histogram(power_output, bin_width=50):
     bins = np.arange(0, np.max(power_output) + bin_width, bin_width)
     freq, _ = np.histogram(power_output, bins=bins)
@@ -250,22 +291,22 @@ def timeplot(X, consumption, b_list, power_output, diesel_kwh, needed, idx, wind
         gen_ave = average_plot(X, diesel_kwh, timestep)
     need_ave = average_plot(X, needed, timestep)
     plt.figure(figsize=(10, 6))
-    plt.xlabel('Year')
-    plt.ylabel('kWh')
-    plt.plot(idx, consumption, label='Consumption')
-    plt.plot(idx, ave_con, label='Average Consumption')
+    plt.xlabel('Time (Year)')
+    plt.ylabel('Energy (kWh)')
+    plt.plot(idx, consumption, label='Hourly Consumption')
+    plt.plot(idx, ave_con, label='Monthly average Consumption')
     if bat_mode:
         plt.plot(idx, chosen_average, 'g', label='Battery')
     if gen_mode:
-        plt.plot(idx, gen_ave, 'r', label='Generator')
+        plt.plot(idx, gen_ave, 'r', label='Monthly average Diesel Generator')
     if wind_mode:
         plt.plot(idx, other_average, 'm', label='Wind Output')
-    plt.plot(idx, need_ave, label='Needed')
+    plt.plot(idx, need_ave, label='Monthly average Energy deficit')
     plt.legend(loc='upper left')
     if wind_mode:
         plt.title(f'Scenario with {n_turbines[0]} {name} turbine(s) and battery capacity of {bat_packs[-1]*60} kWh')
     else:
-        plt.title('Base case with only generator')
+        plt.title('Base case with only Diesel Generator')
         plt.savefig('base_case.png')
     plt.show()
 
@@ -279,6 +320,7 @@ def group_plot(df):
 
     # Plot the mean wind speed for each month and hour
     mean_wind_speed.plot(figsize=(12, 6))
+    plt.ylim([0,700])
     plt.xlabel('Month and Hour')
     plt.ylabel('Consumption [kWh]')
     plt.title(f'Seasonal Variations in the consumption over 20 Years')
@@ -337,8 +379,8 @@ def confreq(df):
 
 
 def emission_plot():
-    emission_list = [3262.15, 1481.32, 1402.39, 1372.12, 1346.31, 1129.6, 1040.88, 1004.48, 972.90, 953.37, 866.81,
-                     830.28, 798.05, 705.338, 623.33, 587.76, 556.25]
+    emission_list = [91086.595, 38292.624, 36475.835, 35791.599, 35191.789, 29129.596, 27032.837, 26198.275, 25452.329,
+                     24622.035, 22543.799, 21697.068, 20937.419, 18077.551, 16053.311, 15226.537, 14484.216]
     x_axis = np.arange(0, len(emission_list), 1)
     labels = ['Base Case', '1S2x/0', '1S2x/1200', '1S2x/1800', '1S2x/2400', '2S2x/0', '2S2x/1200', '2S2x/1800',
               '2S2x/2400', '3S2x/0', '3S2x/1200', '3S2x/1800', '3S2x/2400', 'SWT/0', 'SWT/1200', 'SWT/1800',
@@ -347,36 +389,33 @@ def emission_plot():
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.set_xticks(x_axis)
     ax.set_xticklabels(labels, rotation=30, ha='right')
-    ax.set_yticks(np.arange(0, 6000, 500))
+    ax.set_yticks(np.arange(0, 100000, 10000))
     ax.plot(x_axis, emission_list)
     ax.set_xlabel('Scenario')
-    ax.set_ylabel('Emission (tons')
-    ax.set_title('Emission in tons by Scenario')
+    ax.set_ylabel('Emission (tons CO2)')
+    ax.set_title('Emission in tons of CO2 by Scenario')
     plt.grid()
     plt.axhline(y=twenty, color='r')
-    ax.text(-0.5, twenty, "20 % of Base Case", ha="right", va="bottom", color="r")
+    ax.text(2.5, twenty, "20 % of Base Case", ha="right", va="bottom", color="r")
     plt.savefig('Figures/emissionbyscenario.png')
     plt.show()
     return
 
 
 def diesel_plot():
-    diesel_max = [5660.4798964351085, 4713.50694780554, 4675.992176476462, 4667.555561368581, 4658.490167969307,
-                  4039.437533301029, 3936.757760429382, 3896.400802688124, 3862.641229276157, 3571.7900832324126,
-                  3428.338119380571, 3367.385477411131, 3313.71347132398, 2740.9251045537353, 2558.2647684877616,
-                  2480.31478002967, 2419.369957417569]
-    diesel_min = [4209.572700480878, 585.7126816954881, 433.31517031304213, 375.7288587856899, 324.1675041868724,
-                  375.72850347936384, 264.96654268321333, 215.6466385588212, 178.5562902979011, 288.22919897024497,
-                  201.35712003327123, 160.75952765901687, 127.97562623081566, 228.7910215923156, 155.74142478033437,
-                  119.38850125605136, 88.16903570966946]
-    diesel_std = [280.9525639169696, 796.0624679577357, 821.0625861329654, 832.1495688208815, 841.4012484165302,
-                  686.9682429391488, 691.8546180094593, 695.0829720019101, 697.1275380646462, 617.1308707590197,
-                  612.4686513680792, 611.3673168452215, 609.8320723033764, 474.05929196276594, 461.00658511764846,
-                  457.44558669187035, 454.19275430623367]
-    diesel_mean = [5090.740814248144, 2311.667272251175, 2188.5041353251577, 2141.253372150787, 2100.9855215984003,
-                   1762.789963528148, 1624.345782218431, 1567.5357907651219, 1518.260338483044, 1487.7785237030441,
-                   1352.6936570599553, 1295.6933672394869, 1245.3999235754502, 1100.714716083865, 972.73473003891,
-                   917.2214259636569, 868.0486374357281]
+    diesel_mean = [142145.1240198935, 59757.528672731234, 56922.33912384122, 55854.55502187178, 54918.52201035761,
+                   45458.17143130856, 42186.07534428748, 40883.6998800437, 39719.61403911035, 38423.899077184,
+                   35180.71012933983, 33859.34448642187, 32673.874077614808, 28210.90929469162, 25051.983637555175,
+                   23761.761197088326, 22603.333373356956]
+    diesel_max = [174692.33487694923, 132750.62819200728, 131945.9367122683, 131718.66398499557, 131491.39125772283,
+                  111703.02040455841, 109351.91804128212, 108421.81134295548, 107574.96898158122, 98062.42017364317,
+                  94804.43379903775, 93369.85894125684, 92066.3021455116, 73558.723455113, 69098.1665111399,
+                  67246.884393911, 65725.02133425117]
+    diesel_min = [107774.7221798104, 14035.918688704729, 10402.206822757043, 9059.375111947897, 7862.147927465066,
+                  8928.60175586193, 6304.580310764937, 5172.74040515069, 4315.274028375219, 6610.314080844521,
+                  4827.239163120602, 3899.877061318818, 3162.0489685566504, 5533.389555715748, 3608.852327873353,
+                  2785.9705562186414, 2090.020474708014]
+
     x_axis = np.arange(0, len(diesel_max), 1)
     labels = ['Base Case', '1S2x/0', '1S2x/1200', '1S2x/1800', '1S2x/2400', '2S2x/0', '2S2x/1200', '2S2x/1800',
               '2S2x/2400', '3S2x/0', '3S2x/1200', '3S2x/1800', '3S2x/2400', 'SWT/0', 'SWT/1200', 'SWT/1800',
@@ -384,7 +423,6 @@ def diesel_plot():
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.set_xticks(x_axis)
     ax.set_xticklabels(labels, rotation=30, ha='right')
-    ax.set_yticks(np.arange(0, 6000, 500))
     ax.plot(x_axis, diesel_mean, 'o-', label='Mean')
     ax.fill_between(x_axis, diesel_min, diesel_max, alpha=0.2, label='Range')
     ax.set_xlabel('Scenario')
@@ -407,13 +445,13 @@ def seasonal_prod(a_power, b_power, c_power):
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     ax.set_xticks(ticks)
     ax.set_xticklabels(months)
-    ax.plot(x_value, a_power, label='Wind Speed 101')
-    ax.plot(x_value, b_power, label='Wind Speed 99.5')
-    ax.plot(x_value, c_power, label='Wind Speed 50')
+    ax.plot(x_value, a_power, label='Wind Speed 101', color='blue')
+    ax.plot(x_value, b_power, label='Wind Speed 99.5', color='orange')
+    ax.plot(x_value, c_power, label='Wind Speed 50', color='green')
 
     ax.set_xlabel('Time (months)')
     ax.set_ylabel('Power Production (kW)')
-    ax.set_title('Seasonal Variation of Power Production')
+    ax.set_title('Seasonal Variation of Power Production for S2x')
     ax.legend()
-    plt.savefig('Figures/seasonalvariationpowerproduction.png')
+    plt.savefig('Figures/seasonalvariationpowerproductionS2x.png')
     plt.show()

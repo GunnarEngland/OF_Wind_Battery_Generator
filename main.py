@@ -15,8 +15,8 @@ from Consumption_length import consumption_length, list_consumption
 from plotting import power_curve_plot, engine_plot, basic_plot, bar_plot, wind_plot, sorted_bar_plot, \
     plot_wind_and_power_freq, wind_speed_histogram, power_output_histogram, power_coef_plot, consumption_plot, \
     mean_std_con, mean_std_con_year, timeplot, group_plot, meanstdcon, confreq, emission_plot, diesel_plot, \
-    seasonal_prod
-from analysis import calculate_monthly_averages, diesel_calc, seasonal
+    seasonal_prod, wind_speed_multihistogram, power_curve_multiplot
+from analysis import calculate_monthly_averages, diesel_calc, seasonal, wasted_vs_elgen
 import sys
 # Chose what is active, wind, battery and generator
 wind_mode = True  # Include wind calculation
@@ -29,6 +29,8 @@ scenario_text = True
 multiple_text = False
 compare_plot = False
 time_plot = False
+SCRLOLP = True
+
 #  Choose number of turbines
 #n_turbines = [1, 2, 3]
 n_turbines = [1]
@@ -36,12 +38,12 @@ if not wind_mode:
     n_turbines = [0]
 #  Choose number of battery packs
 #bat_packs = [0, 20, 30, 40]
+#bat_packs = [20, 30, 40]
 bat_packs = [20]
 if not bat_mode:
     bat_packs = [00]
 #  Choose which turbine will be used
 name = 'SWT-2.3-113'  # S2x, SWT-2.3-113
-
 
 # Read wind data and consumption data from csv
 read_consumption = pd.read_csv('con_full.csv')
@@ -77,7 +79,11 @@ if wind_mode:
     x_value = string_to_float(turbine.power_curve_wind_speeds)
     y_value = string_to_float(turbine.power_curve_values)
     hub_height = string_to_float(turbine.hub_height)
-
+    if thirdheight:
+        turbine2, turbines = turbineinfo('S2x')
+        x_value2 = string_to_float(turbine2.power_curve_wind_speeds)
+        y_value2 = string_to_float(turbine2.power_curve_values)
+        hub_height2 = string_to_float(turbine2.hub_height)
     #  Wind height
     h = hub_height[-1]  # Set desirable wind height
     c_wind, c_same = c_height(wind, h)  # Calls wind_height module
@@ -85,7 +91,7 @@ if wind_mode:
     if not c_same:
         wind[c_name] = np.array(c_wind)  # Adds new wind speed into dataframe with column-name c_name
     if thirdheight:
-        t = 50
+        t = 99.5
         b_name = 'Wind Speed ' + str(t)
         b_wind, b_same = c_height(wind, t)
         wind[b_name] = np.array(b_wind)
@@ -100,8 +106,8 @@ onlist = []
 emissionlist = []
 generatorlist = []
 
-#mean = seasonal(wind)
-
+if thirdheight:
+    mean = seasonal(wind)
 
 if monthly:
     monthly_average = wind[c_name].resample('M').mean()
@@ -120,7 +126,7 @@ if monthly:
     X = np.arange(0, len(consumption), 1)
     idx = pd.date_range('2024-01-01 00:00', periods=len(consumption), freq='H')
 
-
+power_output = [0] * len(X)
 for i in range(len(n_turbines)):
 
     if n_turbines[i] > 1:
@@ -128,13 +134,16 @@ for i in range(len(n_turbines)):
     if wind_mode:
         # Interpolating the power curve
         f = interpolate.interp1d(x_value, y_value, kind='cubic')
-
+        if thirdheight:
+            f2 = interpolate.interp1d(x_value2, y_value2, kind='cubic')
         # Going from wind data to power output, through the use of the power curve
         power_output = wind_module(c_wind, x_value, f)
-        #power_output_histogram(power_output)
-        #a_power = wind_module(mean['Wind Speed 101'], x_value, f)
-        #b_power = wind_module(mean['Wind Speed 99.5'], x_value, f)
-        #c_power = wind_module(mean['Wind Speed 50'], x_value, f)
+        if thirdheight:
+            power_output_b = wind_module(b_wind, x_value, f)
+            #power_output_histogram(power_output)
+            a_power = wind_module(mean['Wind Speed 101'], x_value, f)
+            b_power = wind_module(mean['Wind Speed 99.5'], x_value, f)
+            c_power = wind_module(mean['Wind Speed 50.0'], x_value, f)
     for j in range(len(bat_packs)):
         gen = 4000
         diesel_kwh = [0] * len(X)
@@ -154,27 +163,37 @@ for i in range(len(n_turbines)):
             wastedlist.append(np.sum(wasted) - (b_list[-1]-b_list[0]))
             maxlist.append(np.sum(max_output))
             onlist.append(on)
-            emissionlist.append(np.sum(emission))
+            emissionlist.append(np.sum(emission)/1000)
             generatorlist.append(np.sum(diesel_kwh))
+        temp = 0
+        prod = 0
+        if SCRLOLP:
+            for x in X:
+                temp += min(power_output[x]+max(0, b_list[x-1]-b_list[x]), consumption[x])
+                prod += consumption[x]
+            SSR = temp / prod
+            #print(f'The SSR is {SSR}')
+            temp = 0
+            prod = 0
+            for x in X:
+                temp += min(power_output[x]+max(0, b_list[x-1]-b_list[x]), consumption[x])
+                prod += power_output[x]+max(0, b_list[x-1]-b_list[x])
+            SCR = temp / prod
+            #print(f'The SCR is {SCR}')
+
+            LOLP = 0
+            for x in X:
+                if power_output[x]+max(0, b_list[x-1]-b_list[x]) < consumption[x]:
+                    LOLP += 1
+            LOLPprint = LOLP/len(consumption)*100
+            print(f'{SSR*100:.2f} & {SCR*100:.2f} & {LOLPprint:.2f} &')
         if wind_mode:
             print(f'Calculated scenario: {n_turbines[i]}{name}/{bat_packs[j]*60}')
+            #print(f'Yearly emission {(np.sum(emission) / 1000) / 20:.2f} tons of CO2')
+            #print(f'emission percentage: {(np.sum(emission) / 1000) / 91086.595 * 100:.2f} %')
         #total_gen.append(np.sum(df_generator[f'{i},{j}']))
 
 #seasonal_prod(a_power, b_power, c_power)
-temp = 0
-prod = 0
-for x in X:
-    temp += min(power_output[x], consumption[x])
-    prod += power_output[x]
-SCR = temp/prod
-print(f'The SCR is {SCR}')
-
-LOLP = 0
-for x in X:
-    if power_output[x] < consumption[x]:
-        LOLP += 1
-print(f'LOLP is {LOLP/len(consumption)}')
-
 
 if compare_plot:
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -182,7 +201,7 @@ if compare_plot:
     ax.set_xlabel('Date')
     ax.set_ylabel('Power output [kWh]')
 
-    ax2 = ax.twinx() # create a second y-axis
+    ax2 = ax.twinx()  # create a second y-axis
     ax2.plot(consumption, label='Consumption', color='red')
     ax2.set_ylabel('Consumption [kWh]')
 
@@ -216,7 +235,6 @@ if scenario_text:
 if time_plot:
     timeplot(X, consumption, b_list, power_output, diesel_kwh, needed, idx, wind_mode, bat_mode, gen_mode, n_turbines,
              name, bat_packs, timestep=500)
-
 
 print('Program ended.')
 

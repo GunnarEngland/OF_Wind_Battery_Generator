@@ -52,9 +52,14 @@ def gen_mode(battery, max_capacity, operative):
     return mode, operative
 
 
-def co2_emission(f, output, diesel_per_kWh):
-    diesel_consumption = f(output) * diesel_per_kWh  # Find numbers from papers
-    emission = diesel_consumption * 2.67  # Find number from papers
+def co2_emission(f, output, kwh_per_diesel):
+    if output == 0:
+        return 0
+    else:
+        diesel_consumption = (output * (1 / 0.3)) * (1 / kwh_per_diesel)
+        emission = diesel_consumption * 2.67
+    #if pri:
+    #    print(f'diesel consumption: {diesel_consumption}, f(output): {f(output)}')
     return emission
 
 
